@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.8.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.7.0...trip-insurance-v0.8.0) (2026-11-21)
+
+
+### Features
+
+* **deck:** join QR and participant sheet link on the fund slide ([4494187](https://github.com/hab56ur9/trip-insurance/commit/44941871eebc506bc51f3f7e6a9ab68b4e9b3bfb))
+* **deck:** put the participant sheet link next to the participant count ([469f86e](https://github.com/hab56ur9/trip-insurance/commit/469f86ec1081abc8d3fef9ef7dc001aec1f1d5e9))
+* **deck:** show a small join QR on the fund slide ([05fed0d](https://github.com/hab56ur9/trip-insurance/commit/05fed0d17ffd333dc4cd2f19582431388400b7e5))
+
+
+### Bug Fixes
+
+* **deck:** drop the stale judging-start jump that crashed the local deck ([632935f](https://github.com/hab56ur9/trip-insurance/commit/632935f0ec42c4f99faf4e687d78aa55a07adb7d))
+* **demo:** keep both demo policies open until slide 8 ([ebad341](https://github.com/hab56ur9/trip-insurance/commit/ebad341f796236e142840279525cce2731c45f85))
+* **demo:** keep both demo policies open until slide 8 ([31f5e4c](https://github.com/hab56ur9/trip-insurance/commit/31f5e4ca6048baf768ba695650cc043c4e48e73a))
+
 ## [0.7.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.6.1...trip-insurance-v0.7.0) (2026-11-21)
 
 
