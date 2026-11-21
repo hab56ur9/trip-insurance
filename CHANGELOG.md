@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.4.0...trip-insurance-v0.5.0) (2026-11-21)
+
+
+### Features
+
+* **ui:** run the demo deck on native screens with a presenter wallet ([7e44443](https://github.com/hab56ur9/trip-insurance/commit/7e44443dc3975fa73336d0b06f5ef40978cf1952))
+
 ## [0.4.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.3.0...trip-insurance-v0.4.0) (2026-11-21)
 
 
