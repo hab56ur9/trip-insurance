@@ -1,0 +1,14 @@
+{
+  "name": "trip-insurance",
+  "description": "Trip Insurance — 단발성 여행 보험 PoC 플러그인 마켓플레이스.",
+  "owner": {
+    "name": "trip-insurance"
+  },
+  "plugins": [
+    {
+      "name": "trip-insurance",
+      "source": "./plugin",
+      "description": "로컬 스택 운영 · 시연 준비 · 개발 규칙 스킬. 엔진과 화면 소스는 이 레포 상위 폴더에 있고 플러그인에는 들어가지 않는다."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오라클 (발표자)</title>
+<link rel="stylesheet" href="app.css?v=20261121">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="shared.js?v=20261121"></script>
+</head>
+<body>
+<main>
+  <div class="top"><h1>오라클 (발표자)</h1><span class="pill" id="clock">—</span></div>
+  <div class="meta">Mock 오라클이 고른 결과에 서명해 판정을 보내요. 판정 기간이 열리면 자동으로 보내고, 시간 이동은 로컬 체인에서만 돼요.</div>
+  <div class="section">
+    <h2>보험 <small id="count"></small></h2>
+    <div id="list"><div class="empty">불러오는 중…</div></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(async () => {
+  const ctx = await setup();
+
+  async function call(path, body, done) {
+    try {
+      await api(ORACLE_API, path, body);
+      toast(done);
+      refresh();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  }
+
+  function card(p, now, pending) {
+    const { policy } = p;
+    const times = [
+      ["모집 마감", policy.biddingEnd],
+      ["판정 시작", policy.windowEnd],
+      ["판정 종료", policy.judgingEnd],
+    ];
+    const jumps = times
+      .filter(([, ts]) => Number(ts) > now)
+      .map(([label, ts]) => `<button class="btn sm ghost" data-jump="${Number(ts) + 1}">${label}로 이동</button>`)
+      .join("");
+    const judging = [1, 2].includes(p.status);
+    const report = judging
+      ? `<button class="btn sm ghost" data-report="${p.id}" data-outcome="normal">정상</button><button class="btn sm" data-report="${p.id}" data-outcome="delay">지연</button>`
+      : "";
+    return `<div class="card"><div class="row"><span class="title">#${p.id} ${esc(p.item?.title || "")}</span>${statusChip(p.status)}</div>
+      <div class="meta">${conditionText(p.item)}${pending ? ` · 판정 대기: ${pending}` : ""}</div>
+      ${times.map(([label, ts]) => `<div class="kv"><span class="k">${label}</span><span class="v">${when(ts)}<small>${left(ts, now)}</small></span></div>`).join("")}
+      <div class="row" style="margin-top: 10px; flex-wrap: wrap; justify-content: flex-start;">${jumps}${report}</div></div>`;
+  }
+
+  async function refresh() {
+    const now = await ctx.now();
+    const [all, reports] = await Promise.all([ctx.policies(), api(ORACLE_API, "/reports").catch(() => ({}))]);
+    $("clock").textContent = `체인 시각 ${when(now)}`;
+    $("count").textContent = all.length ? `${all.length}건` : "";
+    $("list").innerHTML = all.length
+      ? all.reverse().map((p) => card(p, now, reports[p.id] === undefined ? "" : Number(reports[p.id]) >= (p.item?.threshold ?? 1) ? "지연" : "정상")).join("")
+      : `<div class="empty">보험이 아직 없어요.</div>`;
+    document.querySelectorAll("[data-jump]").forEach((el) => (el.onclick = () => call("/time", { to: Number(el.dataset.jump) }, "시간을 옮겼어요")));
+    document.querySelectorAll("[data-report]").forEach((el) => (el.onclick = () => call("/report", { policyId: el.dataset.report, outcome: el.dataset.outcome }, "판정을 맡겼어요")));
+  }
+
+  await refresh();
+  setInterval(() => !document.hidden && refresh().catch(() => {}), 3000);
+})().catch((e) => toast(e.message || String(e), true));
+</script>
+</body>
+</html>

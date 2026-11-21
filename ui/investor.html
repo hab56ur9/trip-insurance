@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보험 투자</title>
+<link rel="stylesheet" href="app.css?v=20261121">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="shared.js?v=20261121"></script>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>보험 투자</h1>
+    <span class="pill"><span class="dot" id="dot"></span>
+      <select id="walletMode" aria-label="지갑">
+        <option value="5">투자자 alice #5</option>
+        <option value="6">투자자 bob #6</option>
+        <option value="7">투자자 carol #7</option>
+        <option value="temp">내 임시 지갑</option>
+      </select>
+    </span>
+  </div>
+  <nav class="nav"><a href="buyer.html">보험</a><a class="on" href="investor.html">투자</a></nav>
+
+  <div class="hero">
+    <div class="label">출금할 수 있는 금액</div>
+    <div class="big" id="credits">—</div>
+    <div class="sub" id="heroSub">지갑을 연결하는 중…</div>
+  </div>
+  <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">입찰과 가스비에 쓸 테스트 ETH가 필요해요.</div></span><button class="btn sm" id="gasBtn">테스트 ETH 받기</button></div></div>
+
+  <div class="section">
+    <h2>입찰 중인 보험 <small>지분 100개 · 높은 금액부터 배정</small></h2>
+    <div id="open"><div class="empty">불러오는 중…</div></div>
+  </div>
+  <div class="section">
+    <h2>내 투자 <small id="count"></small></h2>
+    <div id="mine"><div class="empty">불러오는 중…</div></div>
+  </div>
+
+  <div class="cta"><div class="inner"><button class="btn" id="withdrawBtn" disabled>출금하기</button></div></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(async () => {
+  const ctx = await setup({ defaultRole: 5 });
+  const drafts = {};
+
+  function openCard(p, now) {
+    const start = p.policy.minCoverage / 100n;
+    const units = p.bids.reduce((a, b) => a + Number(b.units), 0);
+    const top = p.bids.reduce((a, b) => (b.unitCoverage > a ? b.unitCoverage : a), 0n);
+    const draft = drafts[p.id] || { units: "10", price: ethers.formatEther(top > start ? top : start) };
+    return `<div class="card">
+      <div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span><span class="chip info">${left(p.policy.biddingEnd, now)}</span></div>
+      <div class="meta">${conditionText(p.item)}</div>
+      <div class="kv"><span class="k">보험료 (무사하면 수익)</span><span class="v">${money(p.policy.premium)}</span></div>
+      <div class="kv"><span class="k">지분당 시작가</span><span class="v">${money(start)}</span></div>
+      <div class="kv"><span class="k">입찰 현황</span><span class="v">${p.bids.length}건 · 지분 ${units}개${top ? `<small>최고 지분당 ${eth(top)}</small>` : ""}</span></div>
+      <div class="row" style="margin-top: 10px; gap: 8px;">
+        <input class="field-in" data-units="${p.id}" value="${esc(draft.units)}" inputmode="numeric" aria-label="지분 수" style="width: 72px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--soft);">
+        <span class="meta">개 ×</span>
+        <input class="field-in" data-price="${p.id}" value="${esc(draft.price)}" inputmode="decimal" aria-label="지분당 보장금액" style="flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--soft);">
+        <span class="meta">ETH</span>
+        <button class="btn sm" data-bid="${p.id}">입찰</button>
+      </div>
+    </div>`;
+  }
+
+  function myCard(p) {
+    const filled = p.stored >= 2 ? p.bids.map((b) => Number(b.filled)) : p.status === 1 ? p.bids.map(() => 0) : allocation(p.bids);
+    const mine = p.bids.map((b, i) => ({ b, filled: filled[i] })).filter(({ b }) => b.bidder === ctx.address);
+    const won = mine.reduce((a, m) => a + m.filled, 0);
+    const deposit = mine.reduce((a, m) => a + BigInt(m.filled) * m.b.unitCoverage, 0n);
+    const refundable = p.status !== 1 && mine.some(({ b, filled }) => !b.refunded && Number(b.units) > filled);
+    const payable = [4, 5, 6].includes(p.status) && mine.some(({ b, filled }) => !b.claimed && filled > 0);
+    const lines = mine.map(({ b, filled }) => `<div class="meta">지분 ${b.units}개 × ${eth(b.unitCoverage)}${p.status === 1 ? "" : ` → 낙찰 ${filled}개`}</div>`).join("");
+    const action = refundable || payable ? `<button class="btn sm" data-claim="${p.id}">청구하기</button>` : "";
+    return `<div class="card"><div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span>${statusChip(p.status)}</div>
+      ${lines}
+      <div class="row"><span class="meta">${p.status === 1 ? "마감 뒤 배정돼요" : `낙찰 지분 ${won}개 · 예치금 ${eth(deposit)}`}</span>${action}</div></div>`;
+  }
+
+  ctx.refresh = async () => {
+    const now = await ctx.now();
+    const [credits, all] = await Promise.all([ctx.read.credits(ctx.address), ctx.policies()]);
+    $("credits").innerHTML = money(credits);
+    $("withdrawBtn").disabled = credits === 0n;
+    $("heroSub").innerHTML = `지갑 <b>${ctx.address.slice(0, 8)}…</b>`;
+    await ctx.gasBanner();
+
+    const open = all.filter((p) => p.status === 1 && p.policy.insured !== ctx.address).reverse();
+    $("open").innerHTML = open.length ? open.map((p) => openCard(p, now)).join("") : `<div class="empty">지금 입찰할 수 있는 보험이 없어요.</div>`;
+    const mine = all.filter((p) => p.bids.some((b) => b.bidder === ctx.address)).reverse();
+    $("count").textContent = mine.length ? `${mine.length}건` : "";
+    $("mine").innerHTML = mine.length ? mine.map(myCard).join("") : `<div class="empty">아직 입찰한 보험이 없어요.</div>`;
+
+    document.querySelectorAll("[data-units],[data-price]").forEach((el) => (el.oninput = () => {
+      const id = el.dataset.units || el.dataset.price;
+      drafts[id] = { units: document.querySelector(`[data-units="${id}"]`).value, price: document.querySelector(`[data-price="${id}"]`).value };
+    }));
+    document.querySelectorAll("[data-bid]").forEach((el) => (el.onclick = async () => {
+      const id = el.dataset.bid;
+      const units = Number(document.querySelector(`[data-units="${id}"]`).value);
+      let price;
+      try { price = ethers.parseEther(document.querySelector(`[data-price="${id}"]`).value); } catch { return toast("지분당 보장금액을 확인해 주세요", true); }
+      el.disabled = true;
+      const ok = await ctx.send("입찰", () => ctx.write.placeBid(id, units, price, { value: price * BigInt(units) }));
+      el.disabled = false;
+      if (ok) { delete drafts[id]; ctx.refresh(); }
+    }));
+    document.querySelectorAll("[data-claim]").forEach((el) => (el.onclick = async () => (await ctx.send("청구", () => ctx.write.claim(el.dataset.claim))) && ctx.refresh()));
+  };
+
+  $("withdrawBtn").onclick = async () => (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
+  await ctx.refresh();
+  setInterval(() => !document.hidden && !document.activeElement?.matches("input") && ctx.refresh().catch(() => {}), 4000);
+})().catch((e) => toast(e.message || String(e), true));
+</script>
+</body>
+</html>

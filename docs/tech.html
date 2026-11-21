@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Insurance PoC Tech Doc</title>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import { render, h, themes, Doc, DocSection, DataTable, Figure, Diagram, Options, Option, Pros, Cons } from "https://hab56ur9.github.io/ui/dist/ui.js";
+
+  const handled = (prefix, rows) => h(DataTable, {
+    fit: true,
+    columns: [{ label: "번호", width: "6rem" }, { label: "요구사항", wrap: true }, { label: "처리", wrap: true }],
+    rows: rows.map(([need, how], i) => [`${prefix}${i + 1}`, need, how]),
+  });
+
+  const architecture = h(Diagram, { id: "tech-architecture", title: "구성", flow: "packets" },
+    h(Diagram.Group, { id: "screens", label: "화면" },
+      h(Diagram.Node, { id: "buyer-ui", label: "구매자 화면", caption: "가입 · 보장금 받기", icon: "phone", col: 0, row: 0 }),
+      h(Diagram.Node, { id: "investor-ui", label: "투자자 화면", caption: "입찰 · 수익 받기", icon: "phone", col: 0, row: 1 }),
+    ),
+    h(Diagram.Group, { id: "contracts", label: "블록체인" },
+      h(Diagram.Node, { id: "nft", label: "비용 NFT", caption: "예약 · 결제 금액 · 소유자", icon: "file", col: 1, row: 0 }),
+      h(Diagram.Node, { id: "engine", label: "보험 컨트랙트", caption: "가입 · 경매 · 판정 · 정산", icon: "shield", col: 1, row: 1 }),
+      h(Diagram.Node, { id: "event", label: "서명 검증", caption: "오라클 서명 확인", icon: "check", col: 1, row: 2 }),
+    ),
+    h(Diagram.Group, { id: "mocks", label: "로컬 Mock 서버" },
+      h(Diagram.Node, { id: "issuer", label: "발급사 서버", caption: "비용 NFT 발급", icon: "server", col: 2, row: 0 }),
+      h(Diagram.Node, { id: "oracle", label: "오라클 서버", caption: "관측값에 서명", icon: "cloud", col: 2, row: 1 }),
+    ),
+    h(Diagram.Arrow, { from: "issuer", to: "nft", step: 1, label: "발급", packet: "file" }),
+    h(Diagram.Arrow, { from: "buyer-ui", to: "engine", step: 2, label: "가입", packet: "send" }),
+    h(Diagram.Arrow, { from: "engine", to: "nft", step: 2, label: "소유 확인", motion: "still" }),
+    h(Diagram.Arrow, { from: "investor-ui", to: "engine", step: 3, label: "입찰", packet: "send" }),
+    h(Diagram.Arrow, { from: "oracle", to: "engine", step: 4, label: "관측값", packet: "info" }),
+    h(Diagram.Arrow, { from: "engine", to: "event", step: 4, label: "서명 확인", motion: "still" }),
+  );
+
+  const joinFlow = h(Diagram, { id: "tech-join", title: "가입 처리", flow: "packets" },
+    h(Diagram.Node, { id: "buyer", label: "구매자", caption: "보험료 · NFT · 조건", icon: "user", col: 0, row: 0 }),
+    h(Diagram.Node, { id: "request", label: "가입 접수", caption: "입력 검사", icon: "shield", col: 1, row: 0 }),
+    h(Diagram.Node, { id: "verifier", label: "NFT 소유 확인", caption: "소유자 = 가입자", icon: "check", col: 2, row: 0 }),
+    h(Diagram.Node, { id: "policy", label: "보험 기록", caption: "입찰 시작", icon: "lock", col: 1, row: 1 }),
+    h(Diagram.Arrow, { from: "buyer", to: "request", step: 1, label: "보험료", packet: "send" }),
+    h(Diagram.Arrow, { from: "request", to: "verifier", step: 2, label: "확인" }),
+    h(Diagram.Arrow, { from: "request", to: "policy", step: 3, label: "저장" }),
+  );
+
+  const auctionFlow = h(Diagram, { id: "tech-auction", title: "경매 처리", flow: "packets" },
+    h(Diagram.Node, { id: "investor", label: "투자자", caption: "지분 수 × 지분당 보장금액", icon: "user", col: 0, row: 0 }),
+    h(Diagram.Node, { id: "bid", label: "입찰 접수", caption: "최소가 · 예치금 검사", icon: "plus", col: 1, row: 0 }),
+    h(Diagram.Node, { id: "bids", label: "입찰 목록", caption: "제출 순서로 저장", icon: "table", col: 2, row: 0 }),
+    h(Diagram.Node, { id: "keeper", label: "첫 호출", caption: "마감 뒤 판정 · 청구", icon: "clock", col: 1, row: 1 }),
+    h(Diagram.Node, { id: "bind", label: "배정", caption: "높은 순 · 지분 100개", icon: "trend-up", col: 2, row: 1 }),
+    h(Diagram.Group, { id: "results", label: "결과" },
+      h(Diagram.Node, { id: "won", label: "낙찰", caption: "지분 · 예치금 기록", icon: "check", col: 3, row: 0 }),
+      h(Diagram.Node, { id: "refund", label: "미배정 환불", caption: "청구하면 투자자 잔액", icon: "undo", col: 3, row: 1 }),
+      h(Diagram.Node, { id: "premium", label: "남은 보험료", caption: "구매자 잔액", icon: "undo", col: 3, row: 2 }),
+    ),
+    h(Diagram.Arrow, { from: "investor", to: "bid", step: 1, label: "예치금", packet: "send" }),
+    h(Diagram.Arrow, { from: "bid", to: "bids", step: 2 }),
+    h(Diagram.Arrow, { from: "keeper", to: "bind", step: 3, packet: "bell" }),
+    h(Diagram.Arrow, { from: "bids", to: "bind", step: 3 }),
+    h(Diagram.Arrow, { from: "bind", to: "won", step: 4 }),
+    h(Diagram.Arrow, { from: "bind", to: "refund", step: 4 }),
+    h(Diagram.Arrow, { from: "bind", to: "premium", step: 4 }),
+  );
+
+  const judgeFlow = h(Diagram, { id: "tech-judge", title: "판정 처리", flow: "packets" },
+    h(Diagram.Node, { id: "presenter", label: "발표자", caption: "정상 · 지연 선택", icon: "user", col: 0, row: 0 }),
+    h(Diagram.Node, { id: "world", label: "관측값 입력", caption: "가짜 현실 데이터", icon: "globe", col: 0, row: 1 }),
+    h(Diagram.Node, { id: "oracle", label: "오라클 서버", caption: "관측값에 서명", icon: "server", col: 1, row: 1 }),
+    h(Diagram.Node, { id: "settle", label: "판정", caption: "서명 · 조건 확인", icon: "shield", col: 2, row: 1 }),
+    h(Diagram.Node, { id: "keeper", label: "첫 청구", caption: "기간 끝 · 판정 없음", icon: "clock", col: 2, row: 2 }),
+    h(Diagram.Group, { id: "status", label: "결과" },
+      h(Diagram.Node, { id: "paid", label: "지급", caption: "조건 충족", icon: "success", col: 3, row: 0 }),
+      h(Diagram.Node, { id: "expired", label: "만료", caption: "조건 미충족", icon: "close", col: 3, row: 1 }),
+      h(Diagram.Node, { id: "voided", label: "무효", caption: "관측값 없음", icon: "warning", col: 3, row: 2 }),
+    ),
+    h(Diagram.Arrow, { from: "presenter", to: "world", step: 1, packet: "sliders" }),
+    h(Diagram.Arrow, { from: "world", to: "oracle", step: 2, label: "관측값", packet: "info" }),
+    h(Diagram.Arrow, { from: "oracle", to: "settle", step: 3, label: "서명된 값", packet: "send" }),
+    h(Diagram.Arrow, { from: "settle", to: "paid", label: "충족" }),
+    h(Diagram.Arrow, { from: "settle", to: "expired", label: "미충족" }),
+    h(Diagram.Arrow, { from: "keeper", to: "voided", dashed: true }),
+  );
+
+  const settleFlow = h(Diagram, { id: "tech-settle", title: "정산 처리", flow: "packets" },
+    h(Diagram.Node, { id: "result", label: "판정 결과", caption: "지급 · 만료 · 무효", icon: "shield", col: 0, row: 1 }),
+    h(Diagram.Group, { id: "credits", label: "출금 가능 잔액" },
+      h(Diagram.Node, { id: "insured", label: "구매자", caption: "지급이면 보장금액", icon: "user", col: 1, row: 0 }),
+      h(Diagram.Node, { id: "holders", label: "투자자", caption: "지분 수만큼 몫", icon: "user", col: 1, row: 1 }),
+      h(Diagram.Node, { id: "treasury", label: "플랫폼", caption: "수수료", icon: "home", col: 1, row: 2 }),
+    ),
+    h(Diagram.Node, { id: "withdraw", label: "출금", caption: "각자 원할 때", icon: "download", col: 2, row: 1 }),
+    h(Diagram.Arrow, { from: "result", to: "insured", step: 1 }),
+    h(Diagram.Arrow, { from: "result", to: "holders", step: 1 }),
+    h(Diagram.Arrow, { from: "result", to: "treasury", step: 1 }),
+    h(Diagram.Arrow, { from: "insured", to: "withdraw", step: 2, packet: "download" }),
+    h(Diagram.Arrow, { from: "holders", to: "withdraw", step: 2, packet: "download" }),
+    h(Diagram.Arrow, { from: "treasury", to: "withdraw", step: 2, packet: "download" }),
+  );
+
+  const limits = (rows) => h(DataTable, {
+    fit: true,
+    columns: [{ label: "한계", width: "10rem" }, { label: "내용", wrap: true }, { label: "대응", wrap: true }],
+    rows,
+  });
+
+  const choice = (items) => h(Options, null, ...items.map(([name, recommended, pros, cons]) =>
+    h(Option, { name, chosen: recommended }, h(Pros, null, ...pros.map((t) => h("li", null, t))), h(Cons, null, ...cons.map((t) => h("li", null, t)))),
+  ));
+
+  render("#app",
+    h(Doc, {
+      title: "[Tech] Trip Insurance PoC",
+      summary: "Trip Insurance PoC를 어떻게 구성하고 구현할지 정리한 기술 문서다.",
+      meta: { version: "0.1" },
+      keepSections: true,
+    },
+      h(DocSection, { title: "구성" },
+        h("p", null, "PoC는 사용자 화면 두 개, 블록체인의 컨트랙트, 로컬 Mock 서버 두 개로 구성한다. 구매자와 투자자는 화면에서 컨트랙트를 직접 호출하고, Mock 서버는 비용 NFT와 관측값을 컨트랙트에 공급한다."),
+        h(Figure, { caption: "화면과 Mock 서버는 컨트랙트만 부르고, 컨트랙트가 NFT 소유와 서명을 직접 확인한다" }, architecture),
+        h("p", null, "Mock 서버를 쓰는 이유는 PoC가 확인하려는 것이 컨트랙트의 규칙이기 때문이다. 실제 발급사와 오라클은 연동하기 어렵고, 시연에서 결과를 마음대로 고를 수 없다. Mock 서버는 실제와 같은 형태의 NFT와 서명된 관측값을 만들므로, 나중에 실제 서비스로 바꿔도 컨트랙트는 그대로 둔다."),
+        h(DataTable, {
+          fit: true,
+          columns: [{ label: "구성 요소", width: "10rem" }, { label: "맡는 일", wrap: true }],
+          rows: [
+            ["보험 컨트랙트", "보험료와 예치금을 보관하고, 경매 · 판정 · 정산 규칙을 실행한다"],
+            ["비용 NFT", "예약과 결제 금액을 담고, 누가 그 예약을 가졌는지 알려 준다"],
+            ["서명 검증", "관측값에 서명한 오라클이 보장 조건의 오라클인지 확인한다"],
+            ["발급사 서버", "실제 예약 발급사를 대신해 구매자에게 비용 NFT를 발급한다"],
+            ["오라클 서버", "발표자가 정한 결과를 관측값으로 만들어 서명하고 컨트랙트에 보낸다"],
+          ],
+        }),
+      ),
+      h(DocSection, { title: "구성 방식" },
+        h("p", null, "보험을 컨트랙트 하나에 모을지 나눌지 정한다. 마감과 무효 같은 시간에 따른 상태 전환은 지연 실행으로 처리한다. 마감 시각과 판정 기간이 체인에 있어 누가 언제 호출해도 결과가 같다."),
+        h(DataTable, {
+          fit: true,
+          columns: [{ label: "Mock 서버", width: "10rem" }, { label: "실제로 필요한 것", wrap: true }, { label: "Mock으로 대신하는 이유", wrap: true }],
+          rows: [
+            ["발급사 서버", "KTX · 숙소 예약사가 예약을 NFT로 발급", "예약을 NFT로 발급하는 실제 예약사가 없다"],
+            ["오라클 서버", "코레일 · 기상청 데이터를 서명해 주는 오라클 서비스", "실제 오라클은 비용과 연동 절차가 필요하고, 시연에서 정상 · 지연을 고를 수 없다"],
+          ],
+        }),
+        choice([
+          ["컨트랙트 하나가 모든 보험을 관리", true, ["배포가 한 번이고 조회가 한곳에 모인다", "보험마다 드는 배포 가스비가 없다"], ["컨트랙트 하나의 결함이 모든 보험에 영향을 준다"]],
+          ["보험마다 컨트랙트를 새로 배포", false, ["보험끼리 자산과 상태가 완전히 나뉜다"], ["가입마다 배포 가스비가 든다", "보험 목록을 따로 모아야 한다"]],
+        ]),
+        limits([
+          ["시간", "블록체인은 정해진 시각에 스스로 실행되지 않는다", "판정 · 청구 트랜잭션이 들어올 때 지난 시각의 상태 전환을 먼저 실행하고, 화면은 조회만으로 현재 상태를 계산한다"],
+          ["오라클 신뢰", "판정은 오라클이 서명한 값만큼만 정확하다", "PoC는 Mock 서버로 대신하고, 실제로는 공신력 있는 데이터 제공자로 바꾼다"],
+        ]),
+      ),
+      h(DocSection, { title: "가입" },
+        h("p", null, "가입은 컨트랙트에 한 번 요청하면 끝난다. 구매자는 보험료를 함께 보내고, 컨트랙트는 비용 NFT의 소유자가 가입자인지 확인한 뒤 보험을 기록하고 입찰을 연다."),
+        h(Figure, { caption: "컨트랙트가 NFT 소유를 확인한 뒤 보험을 기록하고 입찰을 연다" }, joinFlow),
+        handled("G", [
+          ["가입하려면 그 예약의 비용 NFT를 갖고 있어야 한다.", "컨트랙트가 비용 NFT의 현재 소유자를 조회해 가입자와 다르면 거절한다."],
+          ["가입할 때 보험료, 보장 조건, 최소 보장금액을 정해야 한다.", "보험료가 0이거나, 최소 보장금액이 0이거나, 보장 조건이 비어 있으면 거절한다."],
+        ]),
+        choice([
+          ["가입 때 한 번만 소유 확인", true, ["구현이 단순하고 가스비가 적다"], ["가입 뒤 NFT를 넘겨도 보장이 남는다"]],
+          ["판정 때 소유를 다시 확인", false, ["예약을 넘긴 사람이 보장금을 받지 못한다"], ["판정마다 소유 확인 가스비가 늘어난다"]],
+        ]),
+        limits([
+          ["예약의 진위", "NFT가 실제 예약인지는 발급사를 믿어야 한다", "PoC는 Mock 발급사가 발급하고, 실제로는 예약 발급사가 직접 발급해야 한다"],
+          ["중복 가입", "같은 NFT로 보험을 여러 번 들 수 있다", "보장 상한을 두지 않기로 해서 막지 않는다. 도박성 문제는 이후에 검토한다"],
+        ]),
+      ),
+      h(DocSection, { title: "경매" },
+        h("p", null, "입찰은 마감 전까지 들어온 순서대로 쌓기만 한다. 마감 뒤 처음 들어온 판정 · 청구 · 결과 확정 트랜잭션이 배정을 먼저 실행하고, 컨트랙트는 지분당 보장금액이 높은 순으로 지분 100개를 채운다. 배정받지 못한 예치금은 각 투자자가 청구할 때 잔액으로 돌려준다."),
+        h(Figure, { caption: "입찰은 쌓기만 하고, 마감 뒤 첫 호출이 배정하며, 환불은 투자자가 청구할 때 받는다" }, auctionFlow),
+        handled("A", [
+          ["보험 한 건의 지분은 100개로 세팅한다.", "지분 수는 컨트랙트에 고정값으로 둔다."],
+          ["투자자는 원하는 지분 수와 지분당 보장금액을 불러 입찰한다.", "입찰마다 투자자, 지분 수, 지분당 보장금액을 기록한다."],
+          ["지분당 보장금액은 최소 보장금액의 1/100 이상이어야 한다.", "입찰을 받을 때 시작가보다 낮으면 거절한다."],
+          ["입찰자는 부른 금액 전체를 맡겨야 한다.", "함께 전송한 ETH가 지분 수 × 지분당 보장금액과 다르면 거절한다."],
+          ["마감 때 지분당 보장금액이 높은 입찰부터 지분 100개를 배정한다.", "마감 뒤 첫 호출에서 입찰을 금액 순으로 정렬해 배정하고, 같은 금액은 먼저 낸 입찰을 앞에 둔다. 마감 뒤 입찰이 막혀 있어 누가 호출해도 결과가 같다."],
+          ["낙찰된 투자자는 각자 부른 금액으로 보장한다.", "입찰마다 배정된 지분 수를 기록하고, 보장금액은 낙찰된 예치금의 합이다."],
+          ["배정받지 못한 입찰은 예치금을 환불받는다.", "배정되지 않은 지분 몫의 예치금은 투자자가 청구할 때 잔액으로 돌려준다."],
+          ["지분 100개가 다 팔리지 않으면 팔린 만큼만 계약한다.", "팔리지 않은 지분 몫의 보험료는 구매자 잔액으로 환불하고, 하나도 팔리지 않으면 유찰되어 보험료를 전액 환불한다."],
+        ]),
+      ),
+      h(DocSection, { title: "경매 방식" },
+        h("p", null, "입찰 금액을 공개할지, 배정 순서를 언제 정할지 정한다. 배정 비용은 입찰 수에 따라 커진다."),
+        choice([
+          ["공개 입찰", true, ["트랜잭션 한 번으로 입찰이 끝나 구현과 시연이 쉽다"], ["다른 사람의 입찰이 보여 마감 직전 입찰이 유리하다"]],
+          ["봉인 입찰 (금액을 숨겼다가 공개)", false, ["남의 입찰을 보고 따라 할 수 없다"], ["입찰과 공개로 트랜잭션이 두 번 필요하다", "공개하지 않은 입찰 처리가 필요하다"]],
+        ]),
+        choice([
+          ["마감 때 한 번에 정렬", true, ["입찰 트랜잭션의 가스가 적고 구조가 단순하다"], ["입찰이 많으면 배정 가스비가 커진다"]],
+          ["입찰할 때마다 정렬 유지", false, ["배정 트랜잭션의 가스가 적다"], ["입찰마다 가스비가 늘어난다"]],
+        ]),
+        limits([
+          ["배정 가스", "입찰 200건이면 배정 트랜잭션이 약 1,300만 가스를 쓴다", "보험당 입찰을 200건으로 제한하고, 환불과 수령은 각자 청구하게 해 배정에서 쓰기를 줄인다"],
+          ["자본 효율", "보장금액 전액을 예치해야 해 투자자 자산이 판정 때까지 컨트랙트에 묶인다", "지급 능력을 보장하는 대가로 받아들인다"],
+        ]),
+      ),
+      h(DocSection, { title: "판정" },
+        h("p", null, "오라클 서버가 관측값에 서명해 보내면, 컨트랙트는 서명한 오라클과 값을 확인해 보장 조건과 비교한다. 판정 기간이 끝날 때까지 판정이 없으면, 그 뒤 처음 들어온 청구 트랜잭션이 무효로 처리한다. 시연에서는 발표자가 정상 또는 지연을 고른다."),
+        h(Figure, { caption: "발표자가 고른 결과를 오라클 서버가 서명해 보내고, 판정 없이 기간이 끝나면 첫 청구가 무효로 만든다" }, judgeFlow),
+        handled("J", [
+          ["판정은 보장 조건의 오라클이 서명한 관측값으로만 한다.", "서명 검증이 서명한 오라클을 찾아내고, 보장 조건에 적힌 오라클과 다르면 거절한다."],
+          ["관측값이 조건을 충족하면 지급, 충족하지 않으면 만료로 판정한다.", "컨트랙트가 관측값을 보장 조건과 비교해 결과를 기록한다. 판단할 값이 모자라면 판정하지 않는다."],
+          ["판정 기간 안에 관측값이 없으면 계약은 무효다.", "판정 기간이 지나면 판정이 막히고, 그 뒤 첫 청구가 무효로 처리한다. 화면은 조회만으로 무효 상태를 보여 준다."],
+        ]),
+        h("p", null, "판정 근거는 어느 방법이든 보장 조건에 지정된 오라클 하나다. 두 방법은 판정 트랜잭션을 누가 보내느냐만 다르다."),
+        choice([
+          ["오라클이 서명하고 누구나 제출", true, ["오라클 서버가 트랜잭션을 보내지 못해도, 서명된 값만 있으면 구매자나 투자자가 대신 제출할 수 있다"], ["판정마다 서명 검증 가스비가 든다"]],
+          ["오라클 주소가 직접 제출", false, ["서명 없이 보낸 주소만 확인하면 돼 가장 단순하다"], ["오라클 서버가 트랜잭션을 보내지 못하면 판정이 멈춘다"]],
+        ]),
+        limits([
+          ["실제 손해와 차이", "조건 충족을 곧 일정 지장으로 본다. 비가 와도 일정이 진행되거나 그 반대일 수 있다", "구매자가 조건을 고르고, 투자자가 입찰 금액에 반영한다"],
+          ["Mock 오라클", "시연에서는 발표자가 결과를 정하므로 탈중앙화되어 있지 않다", "실제 데이터 제공자로 바꿀 자리로 둔다"],
+          ["블록 타임스탬프", "판정 기간은 블록 타임스탬프를 따르고, 검증자(validator)가 이를 수 초 조정할 수 있다", "판정 기간을 시간 단위로 넉넉히 잡는다"],
+        ]),
+      ),
+      h(DocSection, { title: "정산" },
+        h("p", null, "컨트랙트는 ETH를 바로 전송하지 않고 주소별 잔액에 적립한다. 구매자와 투자자는 원할 때 자기 잔액을 출금한다."),
+        h(Figure, { caption: "판정 결과는 주소별 잔액에만 적립되고, 출금은 각자 한다" }, settleFlow),
+        handled("S", [
+          ["보험료 몫은 배정받은 지분 수에 비례한다.", "수수료를 뺀 보험료를 팔린 지분 수로 나눠 지분 하나의 몫을 정하고, 투자자는 지분 수만큼 받는다."],
+          ["체결된 보험료의 2%는 플랫폼 수수료다.", "판정 때 수수료를 플랫폼 잔액으로 보내고, 나눗셈 나머지도 함께 보낸다."],
+        ]),
+        choice([
+          ["적립 후 각자 출금 (pull)", true, ["한 주소로의 전송이 실패해도 다른 주소의 정산이 막히지 않는다", "재진입(reentrancy) 공격 위험이 줄어든다"], ["수령 주소가 출금 트랜잭션을 한 번 더 보내야 한다"]],
+          ["판정 때 바로 전송 (push)", false, ["수령 주소가 따로 트랜잭션을 보낼 필요가 없다"], ["투자자가 많으면 한 트랜잭션의 가스 사용량이 한도를 넘을 수 있다", "전송 하나가 실패하면 판정 트랜잭션 전체가 revert된다"]],
+        ]),
+        limits([
+          ["가스비", "출금을 포함한 모든 트랜잭션은 보낸 주소가 가스비를 낸다", "시연에서는 테스트 ETH를 지급해 해결한다"],
+          ["나눗셈 나머지", "보험료를 지분 수로 나누면 1 wei 단위 나머지가 생긴다", "나머지는 플랫폼 잔액으로 보내 컨트랙트에 주인 없는 잔액이 남지 않게 한다"],
+        ]),
+      ),
+    ),
+    { theme: themes.sky.minimal, lang: "ko" },
+  );
+</script>
+</body>
+</html>

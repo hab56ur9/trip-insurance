@@ -1,0 +1,9 @@
+out/
+cache/
+broadcast/
+.env
+node_modules
+deployments/*.json
+
+.claude/*
+!.claude/settings.json

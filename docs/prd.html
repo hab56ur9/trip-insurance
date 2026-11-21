@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trip Insurance PoC PRD</title>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import { render, h, themes, Doc, DocSection, DataTable, Figure, Diagram } from "https://hab56ur9.github.io/ui/dist/ui.js";
+
+  const overview = h(Diagram, { id: "trip-insurance-flow", title: "Trip Insurance 한눈에 보기", flow: "packets" },
+    h(Diagram.Group, { id: "buyer", label: "보험 구매자" },
+      h(Diagram.Node, { id: "b-join", label: "가입", caption: "NFT · 조건 · 보험료", icon: "file", col: 0, row: 0 }),
+      h(Diagram.Node, { id: "b-wait", label: "모집 기다리기", caption: "투자자 입찰 진행 중", icon: "clock", col: 0, row: 1 }),
+      h(Diagram.Node, { id: "b-bound", label: "보장 확정", caption: "보장금액이 정해짐", icon: "check", col: 0, row: 2 }),
+      h(Diagram.Node, { id: "b-claim", label: "보장금 받기", caption: "일정이 틀어졌다면", icon: "download", col: 0, row: 3 }),
+    ),
+    h(Diagram.Group, { id: "chain", label: "블록체인 네트워크" },
+      h(Diagram.Node, { id: "request", label: "보험 요청", caption: "보험료를 맡아 둠", icon: "lock", col: 1, row: 0 }),
+      h(Diagram.Node, { id: "auction", label: "경매", caption: "높은 금액부터 배정", icon: "trend-up", col: 1, row: 1 }),
+      h(Diagram.Node, { id: "bind", label: "체결", caption: "보장금액 · 낙찰 확정", icon: "check", col: 1, row: 2 }),
+      h(Diagram.Node, { id: "settle", label: "판정 · 정산", caption: "조건대로 자동 지급", icon: "shield", col: 1, row: 3 }),
+    ),
+    h(Diagram.Group, { id: "investor", label: "보험 투자자" },
+      h(Diagram.Node, { id: "i-pick", label: "보험 고르기", caption: "조건 · 보험료 확인", icon: "search", col: 2, row: 0 }),
+      h(Diagram.Node, { id: "i-bid", label: "입찰", caption: "지분 수 · 보장금액", icon: "plus", col: 2, row: 1 }),
+      h(Diagram.Node, { id: "i-won", label: "낙찰 확인", caption: "탈락분은 바로 환불", icon: "check", col: 2, row: 2 }),
+      h(Diagram.Node, { id: "i-claim", label: "수익 받기", caption: "일정이 무사했다면", icon: "download", col: 2, row: 3 }),
+    ),
+    h(Diagram.Group, { id: "oracle", label: "오라클" },
+      h(Diagram.Node, { id: "oracle-node", label: "관측값 서명", caption: "운행 · 날씨 정보", icon: "cloud", col: 1, row: 4 }),
+    ),
+    h(Diagram.Group, { id: "platform", label: "플랫폼" },
+      h(Diagram.Node, { id: "fee", label: "수수료", caption: "체결 보험료의 2%", icon: "home", col: 2, row: 4 }),
+    ),
+    h(Diagram.Arrow, { from: "b-join", to: "request", step: 1, label: "보험료", packet: "file" }),
+    h(Diagram.Arrow, { from: "request", to: "auction", step: 2 }),
+    h(Diagram.Arrow, { from: "i-bid", to: "auction", step: 3, label: "입찰금", packet: "send" }),
+    h(Diagram.Arrow, { from: "auction", to: "bind", step: 4 }),
+    h(Diagram.Arrow, { from: "bind", to: "b-bound", step: 5, label: "보장 확정", packet: "check" }),
+    h(Diagram.Arrow, { from: "bind", to: "i-won", step: 5, label: "낙찰 · 환불", packet: "check" }),
+    h(Diagram.Arrow, { from: "bind", to: "settle", step: 6 }),
+    h(Diagram.Arrow, { from: "oracle-node", to: "settle", step: 7, label: "관측값", packet: "info" }),
+    h(Diagram.Arrow, { from: "settle", to: "b-claim", step: 8, label: "보장금", packet: "arrow-down" }),
+    h(Diagram.Arrow, { from: "settle", to: "i-claim", step: 8, label: "보험료 몫", packet: "arrow-down" }),
+    h(Diagram.Arrow, { from: "settle", to: "fee", step: 8, label: "수수료", packet: "arrow-down" }),
+  );
+
+  const reqs = (prefix, items) => h(DataTable, {
+    fit: true,
+    columns: [{ label: "번호", width: "10rem" }, { label: "요구사항", wrap: true }],
+    rows: items.map((text, i) => [`${prefix}${i + 1}`, text]),
+  });
+
+  const joinFlow = h(Diagram, { id: "flow-join", title: "가입 흐름", flow: "packets" },
+    h(Diagram.Node, { id: "issuer", label: "예약 발급사", caption: "KTX · 숙소 예약", icon: "globe", col: 0, row: 0 }),
+    h(Diagram.Node, { id: "buyer", label: "보험 구매자", caption: "비용 NFT를 받음", icon: "user", col: 0, row: 1 }),
+    h(Diagram.Node, { id: "form", label: "가입 정보", caption: "조건 · 보장금액 · 보험료", icon: "file", col: 1, row: 1 }),
+    h(Diagram.Node, { id: "chain", label: "보험 요청", caption: "NFT 확인 · 보험료 보관", icon: "lock", col: 2, row: 1 }),
+    h(Diagram.Arrow, { from: "issuer", to: "buyer", step: 1, label: "비용 NFT", packet: "file" }),
+    h(Diagram.Arrow, { from: "buyer", to: "form", step: 2, packet: "send" }),
+    h(Diagram.Arrow, { from: "form", to: "chain", step: 3, label: "보험료", packet: "send" }),
+  );
+
+  const auctionFlow = h(Diagram, { id: "flow-auction", title: "경매 흐름 예시", flow: "packets" },
+    h(Diagram.Group, { id: "bids", label: "입찰" },
+      h(Diagram.Node, { id: "bid-a", label: "투자자 A", caption: "지분 60개 · 지분당 12,000원", icon: "user", col: 0, row: 0 }),
+      h(Diagram.Node, { id: "bid-b", label: "투자자 B", caption: "지분 50개 · 지분당 11,000원", icon: "user", col: 0, row: 1 }),
+      h(Diagram.Node, { id: "bid-c", label: "투자자 C", caption: "지분 30개 · 지분당 10,000원", icon: "user", col: 0, row: 2 }),
+    ),
+    h(Diagram.Node, { id: "close", label: "마감", caption: "높은 금액부터 배정", icon: "trend-up", col: 1, row: 1 }),
+    h(Diagram.Group, { id: "result", label: "결과" },
+      h(Diagram.Node, { id: "win-a", label: "A 지분 60개 낙찰", caption: "부른 금액으로 보장", icon: "check", col: 2, row: 0 }),
+      h(Diagram.Node, { id: "win-b", label: "B 지분 40개 낙찰", caption: "지분 10개 몫 환불", icon: "check", col: 2, row: 1 }),
+      h(Diagram.Node, { id: "lose-c", label: "C 탈락", caption: "예치금 전액 환불", icon: "undo", col: 2, row: 2 }),
+    ),
+    h(Diagram.Arrow, { from: "bid-a", to: "close", step: 1, packet: "send" }),
+    h(Diagram.Arrow, { from: "bid-b", to: "close", step: 1, packet: "send" }),
+    h(Diagram.Arrow, { from: "bid-c", to: "close", step: 1, packet: "send" }),
+    h(Diagram.Arrow, { from: "close", to: "win-a", step: 2 }),
+    h(Diagram.Arrow, { from: "close", to: "win-b", step: 2 }),
+    h(Diagram.Arrow, { from: "close", to: "lose-c", step: 2 }),
+  );
+
+  const judgeFlow = h(Diagram, { id: "flow-judge", title: "판정 흐름", flow: "packets" },
+    h(Diagram.Group, { id: "inputs", label: "판정 근거" },
+      h(Diagram.Node, { id: "terms", label: "보장 조건", caption: "가입 때 정한 기준", icon: "file", col: 0, row: 0 }),
+      h(Diagram.Node, { id: "oracle", label: "오라클 관측값", caption: "기간 안에 받은 값", icon: "cloud", col: 0, row: 1 }),
+    ),
+    h(Diagram.Node, { id: "judge", label: "판정", caption: "관측값을 기준과 비교", icon: "shield", col: 1, row: 1 }),
+    h(Diagram.Group, { id: "verdict", label: "판정 결과" },
+      h(Diagram.Node, { id: "paid", label: "지급", caption: "구매자가 보장금 받음", icon: "success", col: 2, row: 0 }),
+      h(Diagram.Node, { id: "expired", label: "만료", caption: "투자자가 원금·보험료", icon: "close", col: 2, row: 1 }),
+      h(Diagram.Node, { id: "voided", label: "무효", caption: "구매자·투자자 환불", icon: "warning", col: 2, row: 2 }),
+    ),
+    h(Diagram.Arrow, { from: "terms", to: "judge", motion: "still" }),
+    h(Diagram.Arrow, { from: "oracle", to: "judge", label: "서명된 값", packet: "info" }),
+    h(Diagram.Arrow, { from: "judge", to: "paid", label: "조건 충족" }),
+    h(Diagram.Arrow, { from: "judge", to: "expired", label: "조건 미충족" }),
+    h(Diagram.Arrow, { from: "judge", to: "voided", label: "관측값 없이 기간 끝", dashed: true }),
+  );
+
+  const settleFlow = h(Diagram, { id: "flow-settle", title: "정산 흐름", flow: "packets" },
+    h(Diagram.Node, { id: "settle", label: "정산", caption: "판정 결과대로 나눔", icon: "send", col: 0, row: 1 }),
+    h(Diagram.Node, { id: "to-buyer", label: "보험 구매자", caption: "보장금 또는 환불", icon: "user", col: 1, row: 0 }),
+    h(Diagram.Node, { id: "to-investor", label: "보험 투자자", caption: "원금 · 보험료 몫", icon: "user", col: 1, row: 1 }),
+    h(Diagram.Node, { id: "to-platform", label: "플랫폼", caption: "체결 보험료의 2%", icon: "home", col: 1, row: 2 }),
+    h(Diagram.Arrow, { from: "settle", to: "to-buyer", step: 1, packet: "arrow-down" }),
+    h(Diagram.Arrow, { from: "settle", to: "to-investor", step: 1, packet: "arrow-down" }),
+    h(Diagram.Arrow, { from: "settle", to: "to-platform", step: 1, packet: "arrow-down" }),
+  );
+
+  render("#app",
+    h(Doc, {
+      title: "[PRD] Trip Insurance PoC",
+      summary: "여행 일정이 틀어지면 보장금을 자동으로 받는 단발성 여행 보험이다. 여행자가 보험을 요청하면 투자자들이 입찰로 보장을 나눠 맡고, 판정과 지급은 블록체인의 코드가 한다.",
+      meta: { version: "0.1" },
+      keepSections: true,
+    },
+      h(DocSection, { title: "한눈에 보기" },
+        h(Figure, { caption: "구매자와 투자자는 블록체인과만 주고받고, 일정 결과는 오라클이 전한다" }, overview),
+      ),
+      h(DocSection, { title: "가입" },
+        h(Figure, { caption: "구매자는 예약으로 받은 비용 NFT와 가입 정보로 보험을 요청한다" }, joinFlow),
+        h(DataTable, {
+          fit: true,
+          columns: [{ label: "항목", width: "10rem" }, { label: "뜻" }],
+          rows: [
+            ["보험료", "여행자가 내는 ETH"],
+            ["비용 NFT", "예약과 결제 금액을 증명하는 NFT"],
+            ["보장 조건", "일정이 틀어졌다고 볼 오라클 관측값과 기준"],
+            ["최소 보장금액", "일정이 틀어졌을 때 적어도 받을 금액"],
+          ],
+        }),
+        reqs("G", [
+          "가입하려면 그 예약의 비용 NFT를 갖고 있어야 한다.",
+          "가입할 때 보험료, 보장 조건, 최소 보장금액을 정해야 한다.",
+        ]),
+      ),
+      h(DocSection, { title: "경매" },
+        h(Figure, { caption: "예시: 지분당 보장금액이 높은 A, B 순서로 지분 100개가 찬다" }, auctionFlow),
+        reqs("A", [
+          "보험 한 건의 지분은 100개로 세팅한다.",
+          "투자자는 원하는 지분 수와 지분당 보장금액을 불러 입찰한다.",
+          "지분당 보장금액은 최소 보장금액의 1/100 이상이어야 한다.",
+          "입찰자는 부른 금액 전체를 맡겨야 한다.",
+          "마감 때 지분당 보장금액이 높은 입찰부터 지분 100개를 배정한다.",
+          "낙찰된 투자자는 각자 부른 금액으로 보장한다.",
+          "배정받지 못한 입찰은 예치금을 환불받는다.",
+          "지분 100개가 다 팔리지 않으면 팔린 만큼만 계약한다.",
+        ]),
+      ),
+      h(DocSection, { title: "판정" },
+        h(Figure, { caption: "가입 때 정한 기준과 오라클 관측값을 비교해 지급 · 만료를 정하고, 관측값이 오지 않으면 무효가 된다" }, judgeFlow),
+        reqs("J", [
+          "판정은 보장 조건의 오라클이 서명한 관측값으로만 한다.",
+          "관측값이 조건을 충족하면 지급, 충족하지 않으면 만료로 판정한다.",
+          "판정 기간 안에 관측값이 없으면 계약은 무효다.",
+        ]),
+      ),
+      h(DocSection, { title: "정산" },
+        h(Figure, { caption: "정산된 ETH는 구매자 · 투자자 · 플랫폼 몫으로 나뉜다" }, settleFlow),
+        h(DataTable, {
+          fit: true,
+          columns: [{ label: "결과", width: "10rem" }, { label: "보험 구매자" }, { label: "보험 투자자" }],
+          rows: [
+            ["지급", "보장금액 전액", "보험료 몫"],
+            ["만료", "없음", "예치금 + 보험료 몫"],
+            ["무효 · 유찰", "보험료 전액", "예치금 전액"],
+          ],
+        }),
+        reqs("S", [
+          "보험료 몫은 배정받은 지분 수에 비례한다.",
+          "체결된 보험료의 2%는 플랫폼 수수료다.",
+        ]),
+      ),
+    ),
+    { theme: themes.sky.minimal, lang: "ko" },
+  );
+</script>
+</body>
+</html>

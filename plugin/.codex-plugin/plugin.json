@@ -1,0 +1,13 @@
+{
+  "name": "trip-insurance",
+  "version": "0.1.0",
+  "description": "단발성 여행 보험 PoC — 로컬 스택 운영 · 시연 준비 · 개발 규칙 스킬.",
+  "interface": {
+    "displayName": "Trip Insurance"
+  },
+  "skills": {
+    "paths": [
+      "./skills"
+    ]
+  }
+}

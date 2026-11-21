@@ -1,0 +1,13 @@
+{
+  "enabledPlugins": {
+    "trip-insurance@trip-insurance": true
+  },
+  "extraKnownMarketplaces": {
+    "trip-insurance": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/nathan/Developer/trip-insurance"
+      }
+    }
+  }
+}

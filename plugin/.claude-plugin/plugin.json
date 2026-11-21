@@ -1,0 +1,12 @@
+{
+  "name": "trip-insurance",
+  "displayName": "Trip Insurance",
+  "version": "0.1.0",
+  "description": "단발성 여행 보험 PoC(Foundry 엔진 + Node 서비스 + 토스식 화면)를 다루는 스킬: 로컬 스택 운영, 시연 준비, 개발 규칙.",
+  "keywords": [
+    "blockchain",
+    "foundry",
+    "insurance",
+    "demo"
+  ]
+}
