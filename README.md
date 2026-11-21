@@ -62,3 +62,7 @@ The premium minus a 2% fee goes to investors in proportion to their shares. Ever
 One contract handles every policy. The mock issuer and the mock oracle only sign and never decide asset movements. State changes that follow a deadline run on the first call after it.
 
 ![Architecture](docs/diagrams/tech-architecture.svg)
+
+## License
+
+The project is released under the [MIT License](LICENSE).
