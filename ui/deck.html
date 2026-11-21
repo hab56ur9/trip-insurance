@@ -654,6 +654,7 @@
 
   const qrMask = "url(demo-qr.svg) center / contain no-repeat";
   const qrCss = { width: "100%", aspectRatio: "1 / 1", background: "var(--color-fg-default)", mask: qrMask, WebkitMask: qrMask };
+  const cornerQrCss = { position: "absolute", top: "var(--space-8)", right: "var(--space-8)", width: "9rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-1)", color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)" };
 
   const diagramSlide = (title, takeaway, diagram, points, notes) =>
     h(SplitSlide, { title, takeaway, ratio: "3:2", left: diagram, right: h(Bullets, { items: points }), notes });
@@ -722,6 +723,7 @@
         right: h(Figure, { caption: "hab56ur9.github.io/trip-insurance/demo" }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss })),
       }),
       h(Slide, { notes: "참여자 목록이 모이면 한 번에 ETH를 보내요." },
+        h("div", { style: cornerQrCss }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss }), "아직 못 들어왔다면"),
         h(SlideHeader, { title: "참여자에게 ETH 보내기" }),
         h(Takeaway, null, "발표자 지갑에서 참여자 지갑으로 입찰에 쓸 ETH를 보내요."),
         h(FundBoard),
