@@ -13,6 +13,8 @@ const INSURANCE_ABI = [
   "function withdraw()",
 ];
 const NFT_ABI = [
+  "function issuer() view returns (address)",
+  "function mint(address to, bytes32 subject, uint64 start, uint64 end, uint256 amount) returns (uint256)",
   "function totalMinted() view returns (uint256)",
   "function ownerOf(uint256) view returns (address)",
   "function bookingOf(uint256) view returns (tuple(bytes32 subject,uint64 start,uint64 end,uint256 amount))",
@@ -42,6 +44,8 @@ const TEST_KEYS = {
 };
 
 const PRESENTER = "0xc4DA565aE85053AEc2EF667C28a2AD787CD79bD6";
+const BOOKING_START_AFTER = 600;
+const BOOKING_DURATION = 60;
 
 const QUERY = new URLSearchParams(location.search);
 const HOST = location.hostname || "127.0.0.1";
@@ -214,6 +218,28 @@ async function setup() {
         return { id, policy, status: Number(status), stored: Number(policy.status), bids, item: ctx.caseOf(policy.subject) };
       })
     );
+  };
+
+  ctx.importBookings = async () => {
+    if (NETWORK === "local") return api(PLATFORM, "/bookings/import", { to: ctx.address });
+    if ((await ctx.nft.issuer()) !== ctx.address) throw new Error("예약은 시연자 지갑으로만 불러올 수 있어요");
+    const now = await ctx.now();
+    const [total, policies] = await Promise.all([ctx.nft.totalMinted(), ctx.policies()]);
+    const insured = new Set(policies.filter((p) => p.policy.insured === ctx.address).map((p) => Number(p.policy.tokenId)));
+    const ids = Array.from({ length: Number(total) }, (_, i) => i + 1);
+    const owners = await Promise.all(ids.map((id) => ctx.nft.ownerOf(id)));
+    const mine = ids.filter((id, i) => owners[i] === ctx.address && !insured.has(id));
+    const bookings = await Promise.all(mine.map((id) => ctx.nft.bookingOf(id)));
+    const open = new Set(bookings.filter((b) => Number(b.start) - now > config.minGap + 60).map((b) => b.subject));
+    const nft = new ethers.Contract(config.nft, NFT_ABI, ctx.wallet);
+    let added = 0;
+    for (const item of cases) {
+      if (open.has(item.subjectId)) continue;
+      const start = now + BOOKING_START_AFTER;
+      await (await nft.mint(ctx.address, item.subjectId, start, start + BOOKING_DURATION, ethers.parseEther(item.amountEth))).wait();
+      added++;
+    }
+    return { added };
   };
 
   ctx.gasBanner = async () => {

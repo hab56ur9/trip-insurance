@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121t">
+<link rel="stylesheet" href="../app.css?v=20261121u">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121t"></script>
+<script src="../shared.js?v=20261121u"></script>
 </head>
 <body>
 <main>
@@ -187,7 +187,7 @@
     try {
       $("mainBtn").disabled = true;
       toast("예약 앱에서 불러오는 중…");
-      await api(PLATFORM, "/bookings/import", { to: ctx.address });
+      await ctx.importBookings();
       loaded = true;
       toast("내 예약을 불러왔어요");
       ctx.refresh();
