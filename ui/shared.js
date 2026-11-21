@@ -104,6 +104,7 @@ function reason(e, iface) {
     } catch {}
   }
   const text = e?.shortMessage || e?.message || String(e);
+  if (LIMITED.test(`${text} ${e?.info?.error?.message || ""}`) || /missing revert data/.test(text)) return "체인 연결이 잠시 바빠요. 다시 시도해 주세요";
   const named = Object.keys(ERRORS).find((k) => text.includes(k));
   return named ? ERRORS[named] : text;
 }
@@ -149,6 +150,21 @@ function presenterKey() {
   return presenterKey.memory;
 }
 
+class PatientProvider extends ethers.JsonRpcProvider {
+  async _send(payload) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const results = await super._send(payload);
+        if (attempt >= 6 || !results.some((r) => LIMITED.test(r?.error?.message || ""))) return results;
+      } catch (e) {
+        if (attempt >= 6 || !LIMITED.test(e?.message || "")) throw e;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
+}
+const LIMITED = /limit|rate|429|too many/i;
+
 async function loadNetwork() {
   if (NETWORK === "local") return { config: await api(PLATFORM, "/config"), cases: await api(PLATFORM, "/cases") };
   const network = await api(new URL(`networks/${NETWORK}.json`, SITE).href, "");
@@ -159,7 +175,7 @@ async function loadNetwork() {
 async function setup() {
   const select = $("walletMode");
   const { config, cases } = await loadNetwork();
-  provider = new ethers.JsonRpcProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`);
+  provider = new PatientProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`, undefined, { batchMaxCount: 5 });
   const ctx = { config, cases, provider };
   ctx.read = new ethers.Contract(config.insurance, INSURANCE_ABI, provider);
   ctx.nft = new ethers.Contract(config.nft, NFT_ABI, provider);
@@ -209,28 +225,38 @@ async function setup() {
     }
   };
 
+  const settled = new Map();
   ctx.policies = async () => {
     const count = Number(await ctx.read.policyCount());
     const ids = Array.from({ length: count }, (_, i) => i + 1);
     return Promise.all(
       ids.map(async (id) => {
-        const [policy, status, bids] = await Promise.all([ctx.read.policyOf(id), ctx.read.statusOf(id), ctx.read.bidsOf(id)]);
+        const known = settled.get(id);
+        const [policy, status, bids] = known
+          ? [known.policy, known.status, await ctx.read.bidsOf(id)]
+          : await Promise.all([ctx.read.policyOf(id), ctx.read.statusOf(id), ctx.read.bidsOf(id)]);
+        if (Number(policy.status) >= 3) settled.set(id, { policy, status });
         return { id, policy, status: Number(status), stored: Number(policy.status), bids, item: ctx.caseOf(policy.subject) };
       })
     );
+  };
+
+  const tokens = new Map();
+  ctx.bookingsOf = async (address) => {
+    const total = Number(await ctx.nft.totalMinted());
+    const fresh = Array.from({ length: total }, (_, i) => i + 1).filter((id) => !tokens.has(id));
+    const read = await Promise.all(fresh.map(async (id) => [id, { owner: await ctx.nft.ownerOf(id), booking: await ctx.nft.bookingOf(id) }]));
+    read.forEach(([id, token]) => tokens.set(id, token));
+    return [...tokens].filter(([, token]) => token.owner === address).map(([tokenId, token]) => ({ tokenId, booking: token.booking }));
   };
 
   ctx.importBookings = async (onProgress = () => {}) => {
     if (NETWORK === "local") return api(PLATFORM, "/bookings/import", { to: ctx.address });
     if ((await ctx.nft.issuer()) !== ctx.address) throw new Error("예약은 시연자 지갑으로만 불러올 수 있어요");
     const now = await ctx.now();
-    const [total, policies] = await Promise.all([ctx.nft.totalMinted(), ctx.policies()]);
+    const [mine, policies] = await Promise.all([ctx.bookingsOf(ctx.address), ctx.policies()]);
     const insured = new Set(policies.filter((p) => p.policy.insured === ctx.address).map((p) => Number(p.policy.tokenId)));
-    const ids = Array.from({ length: Number(total) }, (_, i) => i + 1);
-    const owners = await Promise.all(ids.map((id) => ctx.nft.ownerOf(id)));
-    const mine = ids.filter((id, i) => owners[i] === ctx.address && !insured.has(id));
-    const bookings = await Promise.all(mine.map((id) => ctx.nft.bookingOf(id)));
-    const open = new Set(bookings.filter((b) => Number(b.start) - now > config.minGap + 60).map((b) => b.subject));
+    const open = new Set(mine.filter((b) => !insured.has(b.tokenId) && Number(b.booking.start) - now > config.minGap + 60).map((b) => b.booking.subject));
     const nft = new ethers.Contract(config.nft, NFT_ABI, ctx.wallet);
     const missing = cases.filter((item) => !open.has(item.subjectId));
     for (const [i, item] of missing.entries()) {

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121v">
+<link rel="stylesheet" href="../app.css?v=20261121w">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121v"></script>
+<script src="../shared.js?v=20261121w"></script>
 </head>
 <body>
 <main>
@@ -71,13 +71,7 @@
   const show = createViews({ home: "내 여행 보험", join: "보험 가입" });
   const back = () => history.back();
 
-  async function myBookings() {
-    const total = Number(await ctx.nft.totalMinted());
-    const ids = Array.from({ length: total }, (_, i) => i + 1);
-    const owners = await Promise.all(ids.map((id) => ctx.nft.ownerOf(id)));
-    const mine = ids.filter((_, i) => owners[i] === ctx.address);
-    return Promise.all(mine.map(async (tokenId) => ({ tokenId, booking: await ctx.nft.bookingOf(tokenId) })));
-  }
+  const myBookings = () => ctx.bookingsOf(ctx.address);
 
   function joinSheet(entry, now) {
     const item = ctx.caseOf(entry.booking.subject);
@@ -205,7 +199,7 @@
       loaded = true;
       toast("내 예약을 불러왔어요");
     } catch (e) {
-      toast(e.message, true);
+      toast(reason(e), true);
     } finally {
       importing = "";
       showImport();
@@ -222,7 +216,7 @@
     (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
   };
   await ctx.refresh();
-  setInterval(() => !document.hidden && ctx.refresh().catch(() => {}), 4000);
+  setInterval(() => !document.hidden && ctx.refresh().catch(() => {}), 10000);
 })().catch((e) => toast(e.message || String(e), true));
 </script>
 </body>
