@@ -484,7 +484,9 @@
           h(TextField, { label: "1인당 금액 (원)", inputMode: "numeric", value: amount, onChange: setAmount, hint: ethHint(amount) }),
           h(Button, { variant: "primary", disabled: sending || !wallet || waiting.length === 0 || amountWei === 0n, onClick: send }, sending ? "보내는 중…" : `${waiting.length}명에게 보내기`)),
         h("div", { style: boardCss.column },
-          h("strong", null, `참여자 ${rows.length}명`),
+          h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-3)" } },
+            h("strong", null, `참여자 ${rows.length}명`),
+            h("a", { href: PARTICIPANT_SHEET, target: "_blank", rel: "noopener", style: sheetLinkCss }, "참여자 시트 열기 ↗")),
           h("table", { style: css.table },
             h("thead", null, h("tr", null, ["이름", "지갑 주소", "잔액", "상태"].map((th) => h("th", { key: th, style: css.cell }, th)))),
             h("tbody", null, rows.map((r) => h("tr", { key: r.address },
@@ -644,7 +646,7 @@
   const qrMask = "url(demo-qr.svg) center / contain no-repeat";
   const qrCss = { width: "100%", aspectRatio: "1 / 1", background: "var(--color-fg-default)", mask: qrMask, WebkitMask: qrMask };
   const PARTICIPANT_SHEET = "https://docs.google.com/spreadsheets/d/17uoShUF5rRjHvShJJJp6oFv6TBxh5q4lAwvHbxQBVp4/edit";
-  const sheetLinkCss = { display: "inline-block", marginTop: "var(--space-2)", color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)", textDecoration: "underline" };
+  const sheetLinkCss = { color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)", textDecoration: "underline" };
   const cornerQrCss = { position: "absolute", top: "var(--space-8)", right: "var(--space-8)", width: "9rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-1)", color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)" };
 
   const diagramSlide = (title, takeaway, diagram, points, notes) =>
@@ -717,7 +719,6 @@
         h("div", { style: cornerQrCss }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss }), "아직 못 들어왔다면"),
         h(SlideHeader, { title: "참여자에게 ETH 보내기" }),
         h(Takeaway, null, "발표자 지갑에서 참여자 지갑으로 입찰에 쓸 ETH를 보내요."),
-        h("a", { href: PARTICIPANT_SHEET, target: "_blank", rel: "noopener", style: sheetLinkCss }, "참여자 시트 열기 ↗"),
         h(FundBoard),
       ),
       h(Slide, { notes: "왼쪽 구매자 화면에서 보험을 들어요. 입찰이 끝나면 오른쪽 이벤트 발생기에 오라클 키를 넣고 사건마다 O 또는 X를 눌러요. 판정 기간이 열리면 덱이 서명해서 보내요." },
