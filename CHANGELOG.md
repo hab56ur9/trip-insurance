@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.2](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.8.1...trip-insurance-v0.8.2) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ci:** split the Pages build and deploy into two jobs ([b003434](https://github.com/hab56ur9/trip-insurance/commit/b0034344fddbce371dd4032687e0ab88e706cf51))
+* **ci:** split the Pages build and deploy into two jobs ([158bbc9](https://github.com/hab56ur9/trip-insurance/commit/158bbc90d18b86028c224e9228f10eb6171e61a4))
+
 ## [0.8.1](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.8.0...trip-insurance-v0.8.1) (2026-11-21)
 
 
