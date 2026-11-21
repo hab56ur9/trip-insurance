@@ -1,25 +1,37 @@
 ---
-name: trip-dev
-description: Rules for changing code in the Trip Insurance repository. Invoke at session start, or on "맥락 파악", "이 레포 설명", or "어디를 고쳐야".
+name: dev
+description: Workflow for changing code in the Trip Insurance repository, from design to commit. Invoke on "개발", "기능 추가", "고쳐줘", or "맥락 파악".
 ---
 
 # Development
 
-The Trip Insurance repository holds one insurance contract, mock services that only sign, and static screens. `AGENTS.md` holds the decided design and the working rules.
+A change moves from the design to the code, then through verification and review to a commit and a release.
 
-## Context notes
+## Workflow
 
-Volatile facts live in `.context/skills/trip-dev/`. Read them first. When one is missing or stale, find it in the code and record it with the date.
+1. Read `AGENTS.md`, the PRD and the tech doc.
+2. A design change updates the PRD first.
+3. Change the code.
+4. Run the verification below.
+5. Run the `trip-review` agent on the diff and fix its findings. Without that agent, apply the same review yourself.
+6. Commit with a Conventional Commit message when the user asks.
+7. A `feat` or `fix` commit on master opens a release PR. Merging that PR deploys the contracts to Base Sepolia and republishes the demo site.
+
+## Screens
 
 ```text
-Facts    file map, shared screen modules, cache tags, test counts
-Sources  src/, services/, ui/, e2e/, .context/structure.md
+Wording  Plain words; KRW first, ETH small
+Layout   Key information on top, full-screen views, simplicity over features
 ```
 
-## Rules
+A screen change gets a Chrome check for wording and overflow. A change to the shared script or stylesheet bumps the cache tag on every page that loads it.
 
-- Read `AGENTS.md`, `docs/prd.html` and `docs/tech.html` first.
-- A design change updates `docs/prd.html` first, then the code.
-- Asset movements belong to the contract; off-chain parts only sign and display.
-- Code ships without comments.
-- Every change ends with `forge test` and `npm run e2e`, plus Chrome for screens.
+## Common
+
+### Context notes
+
+Volatile facts such as commands, ports and URLs live in `.context/skills/<name>/`, named after this skill. Read them first, and record any missing or stale fact from the code with the date.
+
+### Verification
+
+Every change ends with `forge test`, `npm run e2e` and, for screens, Chrome.

@@ -1,27 +1,19 @@
 ---
 name: trip-demo
-description: Prepares and runs the Trip Insurance class demo. Invoke on "시연 준비", "발표 준비", or "시연 돌려줘".
+description: Runs the Trip Insurance demo locally. Invoke on "데모 해줘", "시연 준비", or "스택 켜줘".
 ---
 
 # Demo
 
-The demo lets participants buy and invest from their phones while the presenter judges policies from a laptop. `docs/demo-runbook.md` holds the full order.
+The demo runs the whole insurance flow on a local chain.
 
-## Context notes
+## Rules
 
-Volatile facts live in `.context/skills/trip-demo/`. Read them first. When one is missing or stale, find it in the code and record it with the date.
-
-```text
-Facts    screen URLs per network, LAN address, participant sheet, funding steps
-Sources  ui/, docs/demo-runbook.md, .context/screens.md, .context/deploy.md
-```
-
-## Roles
-
-```text
-Participants  buyer and investor screens on a phone, temporary wallet
-Presenter     oracle and fund screens, on the laptop only
-```
+- Install the declared toolchain and dependencies first.
+- The start script runs in the background.
+- A clean chain starts only after the running stack stops.
+- The stack is ready once the mock platform API answers.
+- Phones join over the laptop's LAN; presenter screens stay on the laptop.
 
 ## Scenarios
 
@@ -29,3 +21,13 @@ Presenter     oracle and fund screens, on the laptop only
 |---|---|---|
 | On schedule | normal | Expiry; investors claim and withdraw |
 | Disrupted | delay | Payout; the traveler withdraws |
+
+## Common
+
+### Context notes
+
+Volatile facts such as commands, ports and URLs live in `.context/skills/<name>/`, named after this skill. Read them first, and record any missing or stale fact from the code with the date.
+
+### Verification
+
+Every change ends with `forge test`, `npm run e2e` and, for screens, Chrome.

@@ -12,6 +12,23 @@ The demo site holds the slide deck and the demo screens on the Base Sepolia test
 
 **[hab56ur9.github.io/trip-insurance](https://hab56ur9.github.io/trip-insurance/)**
 
+## Agent Plugin
+
+This repository supports an agent plugin for Claude Code and Codex. The plugin runs the demo and supports development.
+
+Claude Code installs the plugin with two commands.
+
+```text
+/plugin marketplace add hab56ur9/trip-insurance
+/plugin install trip-insurance@trip-insurance
+```
+
+Codex adds the marketplace, and the plugin installs from `/plugins`.
+
+```text
+codex plugin marketplace add hab56ur9/trip-insurance
+```
+
 ## Flow
 
 A policy moves through joining, the auction, judging and settlement.

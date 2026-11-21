@@ -1,0 +1,20 @@
+{
+  "name": "trip-insurance",
+  "interface": {
+    "displayName": "Trip Insurance"
+  },
+  "plugins": [
+    {
+      "name": "trip-insurance",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
