@@ -154,7 +154,10 @@ contract TripInsurance {
     function bind(uint256 policyId) public {
         Policy storage policy = policies[policyId];
         if (policy.status != Status.Auction) revert WrongStatus();
-        if (block.timestamp < policy.biddingEnd) revert BiddingOpen();
+        if (block.timestamp < policy.biddingEnd) {
+            if (msg.sender != policy.insured) revert BiddingOpen();
+            policy.biddingEnd = uint64(block.timestamp);
+        }
 
         Bid[] storage list = bids[policyId];
         (uint256[] memory order, uint256[] memory prices) = ranked(list);

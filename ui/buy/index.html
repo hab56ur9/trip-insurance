@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121y">
+<link rel="stylesheet" href="../app.css?v=20261122a">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121y"></script>
+<script src="../shared.js?v=20261122a"></script>
 </head>
 <body>
 <main>
@@ -129,6 +129,11 @@
     };
   }
 
+  function closeButton(p) {
+    if (p.status !== 1 || p.bids.length === 0) return "";
+    return `<button class="btn sm" data-close="${p.id}">지금 체결하기</button>`;
+  }
+
   function refundButton(p) {
     const refund = p.status === 3 || p.status === 6 || (p.status === 2 && outcome(p).sold < 100);
     if (!refund) return "";
@@ -154,7 +159,7 @@
       6: "판정이 없어 보험료를 돌려받아요",
     };
     return `<div class="card"><div class="row"><span class="title">${name}</span>${statusChip(policy.status)}</div>
-      <div class="row"><span class="meta">${lines[policy.status]}</span>${refundButton(policy)}</div></div>`;
+      <div class="row"><span class="meta">${lines[policy.status]}</span>${closeButton(policy) || refundButton(policy)}</div></div>`;
   }
 
   ctx.refresh = async () => {
@@ -174,6 +179,7 @@
       ? shown.slice().reverse().map((b) => tripCard(b, byToken.get(b.tokenId), now)).join("")
       : `<div class="empty">예약 앱에서 내 예약을 불러와 보험을 들어요.</div>`;
     document.querySelectorAll("[data-join]").forEach((el) => (el.onclick = () => joinSheet(bookings.find((b) => b.tokenId === Number(el.dataset.join)), now)));
+    document.querySelectorAll("[data-close]").forEach((el) => (el.onclick = async () => (await ctx.send("체결", () => ctx.write.bind(el.dataset.close))) && ctx.refresh()));
     document.querySelectorAll("[data-bind]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.bind(el.dataset.bind))) && ctx.refresh()));
     document.querySelectorAll("[data-void]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.voidPolicy(el.dataset.void))) && ctx.refresh()));
   };

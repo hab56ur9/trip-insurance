@@ -44,7 +44,7 @@ const TEST_KEYS = {
 };
 
 const PRESENTER = "0xc4DA565aE85053AEc2EF667C28a2AD787CD79bD6";
-const BOOKING_START_AFTER = 240;
+const BOOKING_START_AFTER = 900;
 const BOOKING_DURATION = 60;
 
 const QUERY = new URLSearchParams(location.search);

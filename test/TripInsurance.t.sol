@@ -182,6 +182,20 @@ contract TripInsuranceTest is Test {
         assertEq(held(policyId, carol), 0);
     }
 
+    function test_A9_InsuredClosesBiddingEarly() public {
+        uint256 policyId = request();
+        bid(alice, policyId, 60, 0.12 ether);
+        vm.warp(biddingEnd - 60);
+        vm.prank(buyer);
+        insurance.bind(policyId);
+        assertEq(uint8(insurance.policyOf(policyId).status), uint8(Status.Bound));
+        assertEq(insurance.policyOf(policyId).biddingEnd, biddingEnd - 60);
+        assertEq(held(policyId, alice), 60);
+        vm.prank(bob);
+        vm.expectRevert(TripInsurance.WrongStatus.selector);
+        insurance.placeBid{value: 0.11 ether}(policyId, 1, 0.11 ether);
+    }
+
     function test_A5_EarlierBidWinsATie() public {
         uint256 policyId = request();
         bid(alice, policyId, 70, 0.1 ether);
