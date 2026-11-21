@@ -11,6 +11,7 @@ on:
         default: ""
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -39,7 +40,7 @@ jobs:
           cp docs/*.html docs/*.pdf _site/docs/
           cp -R docs/diagrams _site/docs/
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
       - id: deployment
