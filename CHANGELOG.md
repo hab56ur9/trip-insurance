@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.6.1...trip-insurance-v0.7.0) (2026-11-21)
+
+
+### Features
+
+* judge as soon as the oracle reports after binding ([9889942](https://github.com/hab56ur9/trip-insurance/commit/9889942bc8ad900caaee15c166f6fd7a55f98374))
+* judge as soon as the oracle reports after binding ([c3b299e](https://github.com/hab56ur9/trip-insurance/commit/c3b299e22cc9f57f1a303685112e81cb9552834b))
+
 ## [0.6.1](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.6.0...trip-insurance-v0.6.1) (2026-11-21)
 
 
