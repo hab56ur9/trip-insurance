@@ -66,13 +66,20 @@ jobs:
           UNSAFE_DEMO_KEY: ${{ secrets.UNSAFE_DEMO_KEY }}
           PROFILE: demo
         run: npm run deploy:base-sepolia
-      - name: Commit network settings
+      - name: Merge network settings through a pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release-please.outputs.tag }}
         run: |
+          branch="deploy/$TAG"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
           git add ui/networks/base-sepolia.json
-          git commit -m "chore: deploy ${{ needs.release-please.outputs.tag }} to Base Sepolia"
-          git push origin HEAD:master
+          git commit -m "chore: deploy $TAG to Base Sepolia"
+          git push origin "$branch"
+          gh pr create --base master --head "$branch" --title "chore: deploy $TAG to Base Sepolia" --body "New contract addresses from the $TAG release."
+          gh pr merge "$branch" --squash --delete-branch
 
   pages:
     needs: deploy-contracts
