@@ -5,7 +5,8 @@ This folder is the Claude Code and Codex plugin for the Trip Insurance repositor
 ```text
 skills/demo          Runs the local demo: setup, stack, screens, scenarios
 skills/dev           Workflow for changing code: design, code, verify, review, commit
-agents/trip-review   Reviews a change against the design and the rules (Claude Code)
+agents/simplify      Proposes code that can shrink without changing behavior (Claude Code)
+agents/code-review   Reviews a change against the design and the rules (Claude Code)
 ```
 
 Each skill and agent keeps its volatile facts in `.context/` at the repository root. Agents fill those notes by exploring the code.

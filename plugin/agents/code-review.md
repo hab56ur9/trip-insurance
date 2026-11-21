@@ -1,5 +1,5 @@
 ---
-name: trip-review
+name: code-review
 description: Reviews a Trip Insurance change against the design and the rules without editing files. Use before a commit.
 tools: Read, Grep, Glob, Bash
 ---

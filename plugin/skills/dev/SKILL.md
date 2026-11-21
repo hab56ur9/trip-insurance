@@ -13,9 +13,12 @@ A change moves from the design to the code, then through verification and review
 2. A design change updates the PRD first.
 3. Change the code.
 4. Run the verification below.
-5. Run the `trip-review` agent on the diff and fix its findings. Without that agent, apply the same review yourself.
-6. Commit with a Conventional Commit message when the user asks.
-7. A `feat` or `fix` commit on master opens a release PR. Merging that PR deploys the contracts to Base Sepolia and republishes the demo site.
+5. Run the `simplify` agent on the diff, apply its proposals, and run the verification again.
+6. Run the `code-review` agent on the diff and fix its findings.
+7. Commit with a Conventional Commit message when the user asks.
+8. A `feat` or `fix` commit on master opens a release PR. Merging that PR deploys the contracts to Base Sepolia and republishes the demo site.
+
+A session without these agents applies the same reviews itself.
 
 ## Screens
 
