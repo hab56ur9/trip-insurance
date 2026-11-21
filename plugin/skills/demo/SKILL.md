@@ -1,31 +1,31 @@
 ---
 name: trip-demo
-description: 기말 발표 시연을 준비하고 진행한다 — 구매자 · 투자자 · 오라클(발표자) 화면 열기, 임시 지갑 참여, 시나리오 두 가지(무사 진행 · 일정 틀어짐). "시연 준비", "발표 준비", "시연 돌려줘" 요청 시 호출.
+description: Prepares and runs the Trip Insurance class demo. Invoke on "시연 준비", "발표 준비", or "시연 돌려줘".
 ---
 
-# 시연 준비와 진행
+# Demo
 
-시연은 구매자와 투자자 화면으로 보험을 만들고, 발표자가 오라클 화면에서 판정과 시간 이동을 누른다. 자세한 순서는 레포의 docs/demo-runbook.md에 있다.
+The demo lets participants buy and invest from their phones while the presenter judges policies from a laptop. `docs/demo-runbook.md` holds the full order.
 
-## 열 화면
+## Context notes
 
-폰 참여가 있으면 노트북의 LAN 주소로 연다. 화면은 자기 호스트 이름으로 RPC · 플랫폼 주소를 맞춘다. 오라클 API는 노트북에서만 열린다.
+Volatile facts live in `.context/skills/trip-demo/`. Read them first. When one is missing or stale, find it in the code and record it with the date.
 
 ```text
-투자자   http://<LAN IP>:8099/ui/?wallet=temp
-구매자   http://<LAN IP>:8099/ui/buy/?wallet=temp
-발표자   http://127.0.0.1:8099/ui/oracle/
+Facts    screen URLs per network, LAN address, participant sheet, funding steps
+Sources  ui/, docs/demo-runbook.md, .context/screens.md, .context/deploy.md
 ```
 
-```bash
-ipconfig getifaddr en0
+## Roles
+
+```text
+Participants  buyer and investor screens on a phone, temporary wallet
+Presenter     oracle and fund screens, on the laptop only
 ```
 
-## 시나리오
+## Scenarios
 
-| 시나리오 | 오라클 화면 | 결과 |
+| Scenario | Oracle report | Result |
 |---|---|---|
-| 무사 진행 | 정상 → 모집 마감으로 이동 → 판정 시작으로 이동 | 만료, 투자자 "청구하기" → "출금하기" |
-| 일정 틀어짐 | 지연 → 모집 마감으로 이동 → 판정 시작으로 이동 | 지급, 구매자 "출금하기" |
-
-판정은 판정 기간이 열리면 오라클 서버가 자동으로 보낸다. 마감 뒤 배정과 판정 기간 뒤 무효는 첫 트랜잭션이 함께 처리한다.
+| On schedule | normal | Expiry; investors claim and withdraw |
+| Disrupted | delay | Payout; the traveler withdraws |

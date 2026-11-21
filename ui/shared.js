@@ -56,8 +56,8 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const eth = (wei) => `${Number(ethers.formatEther(wei)).toLocaleString("ko-KR", { maximumFractionDigits: 6 })} ETH`;
 const krw = (wei) => `${Math.round(Number(ethers.formatEther(wei)) * ETH_KRW).toLocaleString("ko-KR")}원`;
 const krwToWei = (won) => ethers.parseEther((Number(String(won).replace(/[^0-9]/g, "")) / ETH_KRW).toFixed(12));
-const weiToKrw = (wei) => Math.round(Number(ethers.formatEther(wei)) * ETH_KRW / 100) * 100;
-const weiToKrwCeil = (wei) => Math.ceil(Number(ethers.formatEther(wei)) * ETH_KRW / 10) * 10;
+const weiToKrw = (wei) => Math.round(Number(ethers.formatEther(wei)) * ETH_KRW / 10) * 10;
+const weiToKrwCeil = (wei) => Math.ceil(Number(ethers.formatEther(wei)) * ETH_KRW);
 const won = (n) => Number(n).toLocaleString("ko-KR");
 const ethHint = (value) => {
   try {

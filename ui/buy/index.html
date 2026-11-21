@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121r">
+<link rel="stylesheet" href="../app.css?v=20261121s">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121r"></script>
+<script src="../shared.js?v=20261121s"></script>
 </head>
 <body>
 <main>
@@ -44,11 +44,11 @@
     <div class="order">
       <div class="order-row">
         <span class="k">최소 보장금액<small>투자자가 더 높게 부를 수 있어요</small></span>
-        <span class="stepper"><button type="button" data-step="minCoverage:-1000" aria-label="1,000원 내리기">−</button><input id="minCoverage" inputmode="numeric" aria-label="최소 보장금액"><span class="unit">원</span><button type="button" data-step="minCoverage:1000" aria-label="1,000원 올리기">+</button></span>
+        <span class="stepper"><button type="button" data-step="minCoverage:-100" aria-label="100원 내리기">−</button><input id="minCoverage" inputmode="numeric" aria-label="최소 보장금액"><span class="unit">원</span><button type="button" data-step="minCoverage:100" aria-label="100원 올리기">+</button></span>
       </div>
       <div class="order-row">
         <span class="k">보험료<small>일정이 무사하면 투자자의 수익이 돼요</small></span>
-        <span class="stepper"><button type="button" data-step="premium:-100" aria-label="100원 내리기">−</button><input id="premium" inputmode="numeric" aria-label="보험료"><span class="unit">원</span><button type="button" data-step="premium:100" aria-label="100원 올리기">+</button></span>
+        <span class="stepper"><button type="button" data-step="premium:-10" aria-label="10원 내리기">−</button><input id="premium" inputmode="numeric" aria-label="보험료"><span class="unit">원</span><button type="button" data-step="premium:10" aria-label="10원 올리기">+</button></span>
       </div>
       <div class="order-row">
         <span class="k">투자자 모집 시간<small id="minutesHint"></small></span>
@@ -83,8 +83,8 @@
     joining = entry;
     $("joinBooking").textContent = item?.title || "보험";
     $("joinCondition").textContent = conditionText(item).replace("이면 지급", "이면 받아요");
-    $("premium").value = won(weiToKrw(ethers.parseEther(item?.premiumEth || "0.003")));
-    $("minCoverage").value = won(weiToKrw(ethers.parseEther(item?.minCoverageEth || "0.06")));
+    $("premium").value = won(weiToKrw(ethers.parseEther(item?.premiumEth || "0.00003")));
+    $("minCoverage").value = won(weiToKrw(ethers.parseEther(item?.minCoverageEth || "0.0006")));
     showPremiumEth();
     const maxMinutes = Math.floor((Number(entry.booking.start) - now - ctx.config.minGap - 30) / 60);
     $("minutes").value = Math.max(1, Math.min(10, maxMinutes));
