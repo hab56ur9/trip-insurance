@@ -368,19 +368,19 @@
 
   const waitCss = { display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "var(--space-6)", color: "#555", textAlign: "center", lineHeight: 1.5 };
 
-  function Screen({ path, title, box, frame, style }) {
+  function Screen({ path, title, box, frame, style, query = "wallet=presenter" }) {
     const [version, setVersion] = useState(0);
     const key = usePresenter();
     return h("div", { style: { ...flowCss.screen, ...style }, onKeyDown: stop, onPointerDown: stop },
       h("div", { style: box }, key
-        ? h("iframe", { key: version, src: `${SCREENS}${path}?wallet=presenter`, title, loading: "lazy", style: frame })
+        ? h("iframe", { key: version, src: `${SCREENS}${path}?${query}`, title, loading: "lazy", style: frame })
         : h("p", { style: waitCss }, "1번 슬라이드에서 시연자 지갑을 먼저 설정해 주세요.")),
       h(Button, { variant: "secondary", onClick: () => setVersion((v) => v + 1) }, "새로고침"));
   }
 
-  function FlowSide({ role, path, steps }) {
+  function FlowSide({ role, path, query, steps }) {
     return h("div", { style: flowCss.side },
-      h(Screen, { path, title: `${role} 화면`, box: flowCss.phone, frame: flowCss.frame }),
+      h(Screen, { path, query, title: `${role} 화면`, box: flowCss.phone, frame: flowCss.frame }),
       h("div", null,
         h("h3", null, role),
         h("ol", { style: flowCss.steps }, steps.map(([title, body]) =>
@@ -703,7 +703,7 @@
             ["체결 확인", "입찰이 마감되면 보장금액이 정해져요."],
             ["출금", "조건을 충족하면 보장금을 출금해요."],
           ] }),
-          h(FlowSide, { role: "투자자", path: "", steps: [
+          h(FlowSide, { role: "투자자", path: "", query: "wallet=temp&join=off", steps: [
             ["보험 고르기", "입찰할 수 있는 보험과 조건을 살펴봐요."],
             ["입찰", "지분 수와 지분당 보장금액을 정해 입찰해요."],
             ["낙찰 확인", "보장금액이 높은 입찰부터 지분을 받아요."],
