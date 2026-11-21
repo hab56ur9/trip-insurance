@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.1](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.6.0...trip-insurance-v0.6.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ci:** let the Pages deploy read workflow artifacts ([635758d](https://github.com/hab56ur9/trip-insurance/commit/635758d79f0cf6c070a1dc9f4e4dbc706e74f64e))
+* **ci:** let the Pages deploy read workflow artifacts ([e924e27](https://github.com/hab56ur9/trip-insurance/commit/e924e27a76f29a1b1ee9dfb1fc9384361346d8ed))
+
 ## [0.6.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.5.1...trip-insurance-v0.6.0) (2026-11-21)
 
 
