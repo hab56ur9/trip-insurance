@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.8.2...trip-insurance-v0.8.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ui:** mint fresh bookings when the old ones are half spent ([3916992](https://github.com/hab56ur9/trip-insurance/commit/39169925202ca99b3258cb390e734912655061bd))
+
 ## [0.8.2](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.8.1...trip-insurance-v0.8.2) (2026-11-21)
 
 
