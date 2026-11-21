@@ -25,9 +25,28 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  deploy-contracts:
+  contracts-changed:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        run: |
+          prev=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          if [ -n "$prev" ] && git diff --quiet "$prev" HEAD -- src script foundry.toml foundry.lock lib .gitmodules; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-contracts:
+    needs: [release-please, contracts-changed]
+    if: needs.contracts-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
     environment: base-sepolia
     steps:
