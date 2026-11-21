@@ -41,6 +41,8 @@ const TEST_KEYS = {
   7: "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
 };
 
+const PRESENTER = "0xc4DA565aE85053AEc2EF667C28a2AD787CD79bD6";
+
 const QUERY = new URLSearchParams(location.search);
 const HOST = location.hostname || "127.0.0.1";
 const SITE = new URL(".", document.currentScript.src);
@@ -126,6 +128,23 @@ function tempKey() {
   }
 }
 
+function presenterKey() {
+  if (!presenterKey.memory) {
+    let shared = "";
+    try {
+      shared = window.parent !== window ? window.parent.tripPresenterKey || "" : "";
+    } catch {}
+    const key = shared || prompt(`시연자 지갑 ${PRESENTER.slice(0, 6)}…${PRESENTER.slice(-4)}의 서명 키`)?.trim();
+    let address = "";
+    try {
+      address = new ethers.Wallet(key).address;
+    } catch {}
+    if (address !== PRESENTER) throw new Error("시연자 지갑의 키가 아니에요");
+    presenterKey.memory = key;
+  }
+  return presenterKey.memory;
+}
+
 async function loadNetwork() {
   if (NETWORK === "local") return { config: await api(PLATFORM, "/config"), cases: await api(PLATFORM, "/cases") };
   const network = await api(new URL(`networks/${NETWORK}.json`, SITE).href, "");
@@ -133,7 +152,7 @@ async function loadNetwork() {
   return network;
 }
 
-async function setup({ defaultRole } = {}) {
+async function setup() {
   const select = $("walletMode");
   const { config, cases } = await loadNetwork();
   provider = new ethers.JsonRpcProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`);
@@ -142,22 +161,30 @@ async function setup({ defaultRole } = {}) {
   ctx.nft = new ethers.Contract(config.nft, NFT_ABI, provider);
 
   ctx.connect = () => {
-    const key = select.value === "temp" ? tempKey() : TEST_KEYS[select.value];
+    const key = select.value === "temp" ? tempKey() : select.value === "presenter" ? presenterKey() : TEST_KEYS[select.value];
     ctx.wallet = new ethers.Wallet(key, provider);
     ctx.address = ctx.wallet.address;
     ctx.write = new ethers.Contract(config.insurance, INSURANCE_ABI, ctx.wallet);
     $("dot").className = "dot on";
   };
   if (select) {
-    if (!config.local) [...select.options].filter((o) => o.value !== "temp").forEach((o) => o.remove());
-    const fallback = config.local && (HOST === "localhost" || HOST === "127.0.0.1") ? String(defaultRole) : "temp";
+    if (!config.local) [...select.options].filter((o) => o.value !== "temp" && o.value !== "presenter").forEach((o) => o.remove());
     const offered = (value) => [...select.options].some((o) => o.value === value);
-    select.value = [QUERY.get("wallet"), stored("trip.wallet"), fallback].find(offered) || select.value;
-    if (QUERY.get("wallet")) store("trip.wallet", select.value);
-    ctx.connect();
+    const use = () => {
+      if (select.value !== "presenter") store("trip.wallet", select.value);
+      try {
+        ctx.connect();
+      } catch (e) {
+        toast(e.message, true);
+        select.value = "temp";
+        ctx.connect();
+      }
+    };
+    select.value = [QUERY.get("wallet"), stored("trip.wallet"), "temp"].find(offered) || select.value;
+    if (QUERY.get("wallet")) use();
+    else ctx.connect();
     select.addEventListener("change", () => {
-      store("trip.wallet", select.value);
-      ctx.connect();
+      use();
       ctx.refresh?.();
     });
   }

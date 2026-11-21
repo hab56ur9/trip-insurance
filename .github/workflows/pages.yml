@@ -33,7 +33,7 @@ jobs:
         run: |
           mkdir -p _site/demo _site/docs
           cp -R ui/. _site/demo/
-          rm -rf _site/demo/oracle _site/demo/fund _site/demo/deck.html _site/demo/demo-qr.svg
+          rm -rf _site/demo/deck.html _site/demo/demo-qr.svg
           cp ui/deck.html _site/index.html
           cp ui/demo-qr.svg _site/
           cp docs/*.html docs/*.pdf _site/docs/

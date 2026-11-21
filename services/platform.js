@@ -32,14 +32,21 @@ function createPlatform({ chain, log = () => {} }) {
     if (typeof to !== "string" || !isAddress(to)) throw new RequestError("지갑 주소가 아니에요");
     const owner = getAddress(to);
     const read = chain.nft();
-    const total = Number(await read.totalMinted());
-    const owned = new Set();
-    for (let tokenId = 1; tokenId <= total; tokenId++) {
-      if ((await read.ownerOf(tokenId)) === owner) owned.add((await read.bookingOf(tokenId)).subject);
+    const insurance = chain.insurance();
+    const [total, count, now] = await Promise.all([read.totalMinted(), insurance.policyCount(), chain.now()]);
+    const policies = await Promise.all(Array.from({ length: Number(count) }, (_, i) => insurance.policyOf(i + 1)));
+    const insured = new Set(policies.filter((p) => p.insured === owner).map((p) => p.tokenId.toString()));
+    const ids = Array.from({ length: Number(total) }, (_, i) => i + 1);
+    const owners = await Promise.all(ids.map((tokenId) => read.ownerOf(tokenId)));
+    const mine = ids.filter((tokenId, i) => owners[i] === owner && !insured.has(String(tokenId)));
+    const open = new Set();
+    for (const tokenId of mine) {
+      const booking = await read.bookingOf(tokenId);
+      if (Number(booking.start) - now > chain.minGap + 60) open.add(booking.subject);
     }
     const added = [];
     for (const item of CASES) {
-      if (owned.has(subjectOf(item))) continue;
+      if (open.has(subjectOf(item))) continue;
       added.push(await book({ to: owner, case: item.key }));
     }
     return { added: added.length, bookings: added };

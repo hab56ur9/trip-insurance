@@ -8,7 +8,7 @@
 <body>
 <div id="app"></div>
 <script type="module">
-  import { render, h, themes, Deck, Slide, SlideHeader, Takeaway, TitleSlide, AgendaSlide, SplitSlide, TableSlide, ClosingSlide, Bullets, Steps, Diagram, Figure, Image } from "https://hab56ur9.github.io/ui/dist/ui.js";
+  import { render, h, themes, Deck, Slide, SlideHeader, Takeaway, TitleSlide, AgendaSlide, SplitSlide, TableSlide, ClosingSlide, Bullets, Steps, Diagram, Figure, Image, Button, TextField, Badge, Callout, Stat, useState, useEffect, useRef, useMemo } from "https://hab56ur9.github.io/ui/dist/ui.js";
 
   const overview = h(Diagram, { id: "trip-insurance-flow", title: "Trip Insurance 한눈에 보기", flow: "packets" },
     h(Diagram.Group, { id: "buyer", label: "보험 구매자" },
@@ -48,64 +48,6 @@
     h(Diagram.Arrow, { from: "settle", to: "fee", step: 8, label: "수수료", packet: "arrow-down" }),
   );
 
-  const joinFlow = h(Diagram, { id: "flow-join", title: "가입 흐름", flow: "packets" },
-    h(Diagram.Node, { id: "issuer", label: "예약 발급사", caption: "KTX · 숙소 예약", icon: "globe", col: 0, row: 0 }),
-    h(Diagram.Node, { id: "buyer", label: "보험 구매자", caption: "비용 NFT를 받음", icon: "user", col: 0, row: 1 }),
-    h(Diagram.Node, { id: "form", label: "가입 정보", caption: "조건 · 보장금액 · 보험료", icon: "file", col: 1, row: 1 }),
-    h(Diagram.Node, { id: "chain", label: "보험 요청", caption: "NFT 확인 · 보험료 보관", icon: "lock", col: 2, row: 1 }),
-    h(Diagram.Arrow, { from: "issuer", to: "buyer", step: 1, label: "비용 NFT", packet: "file" }),
-    h(Diagram.Arrow, { from: "buyer", to: "form", step: 2, packet: "send" }),
-    h(Diagram.Arrow, { from: "form", to: "chain", step: 3, label: "보험료", packet: "send" }),
-  );
-
-  const auctionFlow = h(Diagram, { id: "flow-auction", title: "경매 흐름 예시", flow: "packets" },
-    h(Diagram.Group, { id: "bids", label: "입찰" },
-      h(Diagram.Node, { id: "bid-a", label: "투자자 A", caption: "지분 60개 · 지분당 12,000원", icon: "user", col: 0, row: 0 }),
-      h(Diagram.Node, { id: "bid-b", label: "투자자 B", caption: "지분 50개 · 지분당 11,000원", icon: "user", col: 0, row: 1 }),
-      h(Diagram.Node, { id: "bid-c", label: "투자자 C", caption: "지분 30개 · 지분당 10,000원", icon: "user", col: 0, row: 2 }),
-    ),
-    h(Diagram.Node, { id: "close", label: "마감", caption: "높은 금액부터 배정", icon: "trend-up", col: 1, row: 1 }),
-    h(Diagram.Group, { id: "result", label: "결과" },
-      h(Diagram.Node, { id: "win-a", label: "A 지분 60개 낙찰", caption: "부른 금액으로 보장", icon: "check", col: 2, row: 0 }),
-      h(Diagram.Node, { id: "win-b", label: "B 지분 40개 낙찰", caption: "지분 10개 몫 환불", icon: "check", col: 2, row: 1 }),
-      h(Diagram.Node, { id: "lose-c", label: "C 탈락", caption: "예치금 전액 환불", icon: "undo", col: 2, row: 2 }),
-    ),
-    h(Diagram.Arrow, { from: "bid-a", to: "close", step: 1, packet: "send" }),
-    h(Diagram.Arrow, { from: "bid-b", to: "close", step: 1, packet: "send" }),
-    h(Diagram.Arrow, { from: "bid-c", to: "close", step: 1, packet: "send" }),
-    h(Diagram.Arrow, { from: "close", to: "win-a", step: 2 }),
-    h(Diagram.Arrow, { from: "close", to: "win-b", step: 2 }),
-    h(Diagram.Arrow, { from: "close", to: "lose-c", step: 2 }),
-  );
-
-  const judgeFlow = h(Diagram, { id: "flow-judge", title: "판정 흐름", flow: "packets" },
-    h(Diagram.Group, { id: "inputs", label: "판정 근거" },
-      h(Diagram.Node, { id: "terms", label: "보장 조건", caption: "가입 때 정한 기준", icon: "file", col: 0, row: 0 }),
-      h(Diagram.Node, { id: "oracle", label: "오라클 관측값", caption: "기간 안에 받은 값", icon: "cloud", col: 0, row: 1 }),
-    ),
-    h(Diagram.Node, { id: "judge", label: "판정", caption: "관측값을 기준과 비교", icon: "shield", col: 1, row: 1 }),
-    h(Diagram.Group, { id: "verdict", label: "판정 결과" },
-      h(Diagram.Node, { id: "paid", label: "지급", caption: "구매자가 보장금 받음", icon: "success", col: 2, row: 0 }),
-      h(Diagram.Node, { id: "expired", label: "만료", caption: "투자자가 원금·보험료", icon: "close", col: 2, row: 1 }),
-      h(Diagram.Node, { id: "voided", label: "무효", caption: "구매자·투자자 환불", icon: "warning", col: 2, row: 2 }),
-    ),
-    h(Diagram.Arrow, { from: "terms", to: "judge", motion: "still" }),
-    h(Diagram.Arrow, { from: "oracle", to: "judge", label: "서명된 값", packet: "info" }),
-    h(Diagram.Arrow, { from: "judge", to: "paid", label: "조건 충족" }),
-    h(Diagram.Arrow, { from: "judge", to: "expired", label: "조건 미충족" }),
-    h(Diagram.Arrow, { from: "judge", to: "voided", label: "관측값 없이 기간 끝", dashed: true }),
-  );
-
-  const settleFlow = h(Diagram, { id: "flow-settle", title: "정산 흐름", flow: "packets" },
-    h(Diagram.Node, { id: "settle", label: "정산", caption: "판정 결과대로 나눔", icon: "send", col: 0, row: 1 }),
-    h(Diagram.Node, { id: "to-buyer", label: "보험 구매자", caption: "보장금 또는 환불", icon: "user", col: 1, row: 0 }),
-    h(Diagram.Node, { id: "to-investor", label: "보험 투자자", caption: "원금 · 보험료 몫", icon: "user", col: 1, row: 1 }),
-    h(Diagram.Node, { id: "to-platform", label: "플랫폼", caption: "체결 보험료의 2%", icon: "home", col: 1, row: 2 }),
-    h(Diagram.Arrow, { from: "settle", to: "to-buyer", step: 1, packet: "arrow-down" }),
-    h(Diagram.Arrow, { from: "settle", to: "to-investor", step: 1, packet: "arrow-down" }),
-    h(Diagram.Arrow, { from: "settle", to: "to-platform", step: 1, packet: "arrow-down" }),
-  );
-
   const architecture = h(Diagram, { id: "tech-architecture", title: "구성", flow: "packets" },
     h(Diagram.Group, { id: "screens", label: "화면" },
       h(Diagram.Node, { id: "buyer-ui", label: "구매자 화면", caption: "가입 · 보장금 받기", icon: "phone", col: 0, row: 0 }),
@@ -128,6 +70,591 @@
     h(Diagram.Arrow, { from: "engine", to: "event", step: 4, label: "서명 확인", motion: "still" }),
   );
 
+  const SCREENS = location.pathname.endsWith("/deck.html") ? "./" : "./demo/";
+
+  const EVENTS = [
+    "event PolicyRequested(uint256 indexed policyId, address indexed insured, uint256 tokenId, uint256 premium, uint256 minCoverage)",
+    "event BidPlaced(uint256 indexed policyId, address indexed bidder, uint256 bidId, uint16 units, uint256 unitCoverage)",
+    "event PolicyBound(uint256 indexed policyId, uint16 soldUnits, uint256 coverage, uint256 usedPremium)",
+    "event PolicyCancelled(uint256 indexed policyId)",
+    "event Settled(uint256 indexed policyId, uint8 status, int256 value, uint256 fee)",
+    "event Claimed(uint256 indexed policyId, address indexed holder, uint256 amount)",
+  ];
+  const DEFAULT_ADDRESS = "0xc4DA565aE85053AEc2EF667C28a2AD787CD79bD6";
+  const LOG_STEP = 200;
+  const LOG_BATCH = 5;
+  const LOG_ROUNDS = 60;
+  const STATUS_TONE = ["neutral", "main", "main", "neutral", "critical", "good", "warning"];
+
+  const script = (src) => new Promise((resolve, reject) => {
+    const el = document.createElement("script");
+    el.src = src;
+    el.onload = resolve;
+    el.onerror = () => reject(new Error(`${src}를 불러오지 못했어요`));
+    document.head.append(el);
+  });
+  let chain;
+  const connect = () => (chain ||= script("https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js")
+    .then(() => script(`${SCREENS}shared.js`))
+    .then(() => setup()));
+
+  async function latestPolicy(ctx, address) {
+    for (let id = Number(await ctx.read.policyCount()); id > 0; id--) {
+      const policy = await ctx.read.policyOf(id);
+      if (policy.insured.toLowerCase() !== address.toLowerCase()) continue;
+      const [status, bids] = await Promise.all([ctx.read.statusOf(id), ctx.read.bidsOf(id)]);
+      return { id, policy, bids, status: Number(status) };
+    }
+    return null;
+  }
+
+  async function retry(task, attempts = 3) {
+    for (let i = 1; ; i++) {
+      try { return await task(); }
+      catch (err) { if (i >= attempts) throw err; await new Promise((r) => setTimeout(r, 1000 * i)); }
+    }
+  }
+
+  async function policyLogs(ctx, id) {
+    const iface = new ethers.Interface(EVENTS);
+    const requested = iface.getEvent("PolicyRequested").topicHash;
+    const topics = [null, ethers.zeroPadValue(ethers.toBeHex(id), 32)];
+    const logs = [];
+    let to = await ctx.provider.getBlockNumber();
+    for (let round = 0; to >= 0 && round < LOG_ROUNDS; round++, to -= LOG_BATCH * LOG_STEP) {
+      const ends = Array.from({ length: LOG_BATCH }, (_, i) => to - i * LOG_STEP).filter((end) => end >= 0).reverse();
+      const found = (await Promise.all(ends.map((end) => retry(() => ctx.provider.getLogs({ address: ctx.config.insurance, topics, fromBlock: Math.max(0, end - LOG_STEP + 1), toBlock: end }))))).flat();
+      logs.unshift(...found);
+      if (found.some((log) => log.topics[0] === requested)) break;
+    }
+    return logs.map((log) => ({ log, event: iface.parseLog(log) })).filter((entry) => entry.event);
+  }
+
+  async function blocksOf(ctx, logs) {
+    const numbers = [...new Set(logs.map(({ log }) => log.blockNumber))];
+    const blocks = await Promise.all(numbers.map((n) => ctx.provider.getBlock(n)));
+    return blocks.map((block) => ({ block, entries: logs.filter(({ log }) => log.blockNumber === block.number) }));
+  }
+
+  function describe({ event }) {
+    const a = event.args;
+    switch (event.name) {
+      case "PolicyRequested": return { label: "가입", who: a.insured, text: `보험료 ${krw(a.premium)} · 최소 보장 ${krw(a.minCoverage)}` };
+      case "BidPlaced": return { label: "입찰", who: a.bidder, text: `${a.units}지분 × ${krw(a.unitCoverage)}` };
+      case "PolicyBound": return { label: "체결", text: `${a.soldUnits}지분 · 보장 ${krw(a.coverage)}` };
+      case "PolicyCancelled": return { label: "유찰", text: "입찰이 없어 환불" };
+      case "Settled": return { label: `판정 · ${STATUS[Number(a.status)]}`, text: `관측값 ${a.value} · 수수료 ${krw(a.fee)}` };
+      case "Claimed": return { label: "청구", who: a.holder, text: krw(a.amount) };
+    }
+  }
+
+  function outcome(found, item, logs) {
+    const settled = logs.find(({ event }) => event.name === "Settled")?.event.args;
+    const observed = settled && item ? `관측값 ${settled.value}${item.unit}, 기준 ${item.threshold}${item.unit}` : "";
+    switch (found.status) {
+      case 1: return "투자자 입찰을 모으고 있어요.";
+      case 2: return "체결됐고, 판정을 기다리고 있어요.";
+      case 3: return "입찰이 없어서 가입자가 보험료를 돌려받았어요.";
+      case 4: return `${observed} 이상이라서 가입자가 보장금 ${krw(found.policy.coverage)}을 받았어요.`;
+      case 5: return `${observed} 미만이라서 낙찰받은 투자자가 보험료를 나눠 받았어요.`;
+      case 6: return "판정 기간에 서명이 오지 않아서 모두 돌려받았어요.";
+    }
+    return "";
+  }
+
+  async function participantsOf(ctx) {
+    const url = ctx.config.participants || (await api(`${SCREENS}networks/base-sepolia.json`, "")).config.participants;
+    return url ? api(url, "") : [];
+  }
+
+  async function namer(ctx, me) {
+    const list = await participantsOf(ctx).catch(() => []);
+    const names = new Map(list.map((p) => [p.address.toLowerCase(), p.name]));
+    return (address) => {
+      if (address.toLowerCase() === me) return "가입자";
+      const name = names.get(address.toLowerCase());
+      return name ? `${name} (${short(address)})` : short(address);
+    };
+  }
+
+  function received(logs, holder) {
+    return logs.filter(({ event }) => event.name === "Claimed" && event.args.holder === holder).reduce((sum, { event }) => sum + event.args.amount, 0n);
+  }
+
+  function Result({ found, item, logs, nameOf }) {
+    const bound = found.policy.soldUnits > 0;
+    return h("div", { style: css.result },
+      h("div", { style: css.panel },
+        h("strong", null, "낙찰"),
+        found.bids.length === 0
+          ? h("span", { style: css.muted }, "입찰이 없었어요")
+          : h("table", { style: css.table },
+              h("thead", null, h("tr", null, ["투자자", "입찰", "낙찰", "받은 금액"].map((th) => h("th", { key: th, style: css.cell }, th)))),
+              h("tbody", null, found.bids.map((bid, i) => {
+                const amount = received(logs, bid.bidder);
+                return h("tr", { key: i },
+                  h("td", { style: css.cell }, nameOf(bid.bidder)),
+                  h("td", { style: css.cell }, `${bid.units}지분 × ${krw(bid.unitCoverage)}`),
+                  h("td", { style: css.cell }, bound ? (bid.filled > 0 ? h(Badge, { tone: "good" }, `${bid.filled}지분`) : h(Badge, { tone: "neutral" }, "탈락")) : "배정 전"),
+                  h("td", { style: css.cell }, amount > 0n ? krw(amount) : "—"));
+              })))),
+      h("div", { style: css.panel },
+        h("strong", null, "결과"),
+        h("div", null, h(Badge, { tone: STATUS_TONE[found.status] }, STATUS[found.status])),
+        h("span", null, outcome(found, item, logs))));
+  }
+
+  const clock = (ts) => new Date(ts * 1000).toLocaleTimeString("ko-KR", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const short = (hex) => `${hex.slice(0, 6)}…${hex.slice(-4)}`;
+  const stop = (e) => e.stopPropagation();
+  const errorText = (err) => err.shortMessage || err.message || String(err);
+  const css = {
+    form: { display: "flex", gap: "var(--space-2)", alignItems: "center", maxWidth: "44rem" },
+    summary: { display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap", margin: "var(--space-4) 0 var(--space-3)", color: "var(--color-fg-secondary)" },
+    chain: { display: "flex", alignItems: "stretch", gap: "var(--space-2)", overflowX: "auto", paddingBottom: "var(--space-2)" },
+    link: { alignSelf: "center", color: "var(--color-fg-muted)" },
+    block: { flex: "0 0 13rem", display: "flex", flexDirection: "column", gap: "var(--space-2)", padding: "var(--space-3)", border: "var(--border-width-default) solid var(--color-border-default)", borderRadius: "var(--radius-card)", background: "var(--color-bg-surface)" },
+    head: { display: "flex", justifyContent: "space-between", gap: "var(--space-2)", whiteSpace: "nowrap", fontFamily: "var(--font-family-mono)", fontSize: "var(--font-size-caption)", color: "var(--color-fg-muted)" },
+    entry: { display: "flex", flexDirection: "column", gap: "var(--space-1)", paddingTop: "var(--space-2)", borderTop: "var(--border-width-default) solid var(--color-border-default)", fontSize: "var(--font-size-label)" },
+    mono: { fontFamily: "var(--font-family-mono)", fontSize: "var(--font-size-caption)", color: "var(--color-fg-muted)" },
+    empty: { marginTop: "var(--space-4)", color: "var(--color-fg-muted)" },
+    result: { display: "grid", gridTemplateColumns: "3fr 2fr", gap: "var(--space-4)", marginTop: "var(--space-4)" },
+    panel: { display: "flex", flexDirection: "column", gap: "var(--space-2)", padding: "var(--space-4)", border: "var(--border-width-default) solid var(--color-border-default)", borderRadius: "var(--radius-card)" },
+    table: { width: "100%", borderCollapse: "collapse", fontSize: "var(--font-size-label)" },
+    cell: { textAlign: "left", padding: "var(--space-1) var(--space-2) var(--space-1) 0" },
+    muted: { color: "var(--color-fg-muted)" },
+  };
+
+  function Block({ block, entries, explorer, nameOf }) {
+    const tx = entries[0].log.transactionHash;
+    return h("div", { style: css.block },
+      h("div", { style: css.head }, h("span", null, `#${block.number.toLocaleString("ko-KR")}`), h("span", null, clock(block.timestamp))),
+      explorer
+        ? h("a", { style: css.mono, href: `${explorer}/tx/${tx}`, target: "_blank", rel: "noopener" }, `tx ${short(tx)}`)
+        : h("span", { style: css.mono }, `tx ${short(tx)}`),
+      entries.map((entry) => {
+        const { label, who, text } = describe(entry);
+        return h("div", { key: entry.log.index, style: css.entry },
+          h("strong", null, label),
+          who && h("span", { style: css.muted }, nameOf(who)),
+          h("span", null, text));
+      }));
+  }
+
+  function PolicyHistory() {
+    const [address, setAddress] = useState(new URLSearchParams(location.search).get("address") || DEFAULT_ADDRESS);
+    const [state, setState] = useState({ phase: "idle" });
+    const search = async (e) => {
+      e.preventDefault();
+      if (!/^0x[0-9a-fA-F]{40}$/.test(address.trim())) return setState({ phase: "error", message: "0x로 시작하는 지갑 주소 40자리를 넣어 주세요" });
+      setState({ phase: "loading" });
+      try {
+        const ctx = await connect();
+        const found = await latestPolicy(ctx, address.trim());
+        if (!found) return setState({ phase: "error", message: "이 주소로 가입한 보험이 없어요" });
+        const [logs, nameOf] = await Promise.all([policyLogs(ctx, found.id), namer(ctx, address.trim().toLowerCase())]);
+        const blocks = await blocksOf(ctx, logs);
+        const explorer = ctx.config.local ? "" : "https://sepolia.basescan.org";
+        setState({ phase: "done", found, logs, blocks, explorer, nameOf, item: ctx.caseOf(found.policy.subject) });
+      } catch (err) {
+        setState({ phase: "error", message: errorText(err) });
+      }
+    };
+    const { found, logs, blocks, explorer, item, nameOf } = state;
+    return h("div", { onKeyDown: stop, onPointerDown: stop },
+      h("form", { style: css.form, onSubmit: search },
+        h("div", { style: { flex: 1 } }, h(TextField, { label: "가입자 지갑 주소", hideLabel: true, value: address, onChange: setAddress, placeholder: DEFAULT_ADDRESS, icon: "search" })),
+        h(Button, { variant: "primary", type: "submit", disabled: state.phase === "loading" }, state.phase === "loading" ? "조회 중…" : "조회")),
+      state.phase === "error" && h("p", { style: css.empty }, state.message),
+      state.phase === "done" && h("div", null,
+        h("div", { style: css.summary },
+          h("strong", null, `보험 #${found.id} · ${item?.title ?? "보험"}`),
+          h(Badge, { tone: STATUS_TONE[found.status] }, STATUS[found.status]),
+          h("span", null, `보험료 ${krw(found.policy.premium)}`),
+          found.policy.coverage > 0n && h("span", null, `보장 ${krw(found.policy.coverage)}`)),
+        h("div", { style: css.chain },
+          blocks.flatMap(({ block, entries }, i) => [
+            i > 0 && h("span", { key: `link-${block.number}`, style: css.link }, "→"),
+            h(Block, { key: block.number, block, entries, explorer, nameOf }),
+          ])),
+        h(Result, { found, item, logs, nameOf })));
+  }
+
+  const PHONE = { width: 390, height: 740, scale: 0.9 };
+  const BIG_PHONE = { width: 375, height: 667, scale: 1.35 };
+  const phoneBox = (size) => ({ flex: "none", width: size.width * size.scale, height: size.height * size.scale, overflow: "hidden", border: "var(--border-width-default) solid var(--color-border-default)", borderRadius: "var(--radius-card)", background: "#fff" });
+  const phoneFrame = (size) => ({ width: size.width, height: size.height, border: 0, transform: `scale(${size.scale})`, transformOrigin: "0 0" });
+  const flowCss = {
+    sides: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-6)", marginTop: "var(--space-3)" },
+    side: { display: "flex", gap: "var(--space-4)", alignItems: "flex-start" },
+    phone: phoneBox(PHONE),
+    frame: phoneFrame(PHONE),
+    steps: { display: "flex", flexDirection: "column", gap: "var(--space-3)", margin: 0, paddingLeft: "var(--space-5)" },
+    body: { color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)" },
+    screen: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "var(--space-2)" },
+  };
+
+  const presenter = { key: "", listeners: new Set() };
+  window.tripPresenterKey = "";
+  const setPresenter = (key) => {
+    if (presenter.key === key) return;
+    presenter.key = window.tripPresenterKey = key;
+    presenter.listeners.forEach((listen) => listen(key));
+  };
+  function usePresenter() {
+    const [key, setKey] = useState(presenter.key);
+    useEffect(() => {
+      presenter.listeners.add(setKey);
+      return () => presenter.listeners.delete(setKey);
+    }, []);
+    return key;
+  }
+
+  const VISIBLE = 5;
+  const masked = (key) => key.slice(0, VISIBLE) + "•".repeat(Math.max(0, key.length - VISIBLE));
+  function unmask(key, next) {
+    const shown = masked(key);
+    let start = 0;
+    while (start < shown.length && start < next.length && shown[start] === next[start]) start++;
+    let end = 0;
+    while (end < shown.length - start && end < next.length - start && shown[shown.length - 1 - end] === next[next.length - 1 - end]) end++;
+    return key.slice(0, start) + next.slice(start, next.length - end) + key.slice(key.length - end);
+  }
+  function KeyField({ label, value, onChange, hint }) {
+    return h(TextField, { label, value: masked(value), onChange: (next) => onChange(unmask(value, next)), placeholder: "0x…", hint });
+  }
+
+  const setupCss = {
+    root: { display: "flex", flexDirection: "column", gap: "var(--space-3)", maxWidth: "36rem", marginTop: "var(--space-6)", textAlign: "left" },
+    row: { display: "flex", gap: "var(--space-3)", alignItems: "center" },
+  };
+
+  function PresenterSetup() {
+    const [ctx, setCtx] = useState(null);
+    const [key, setKey] = useState("");
+    const [balance, setBalance] = useState(null);
+    const [message, setMessage] = useState("");
+    useEffect(() => { connect().then(setCtx, (err) => setMessage(errorText(err))); }, []);
+    const wallet = useMemo(() => {
+      try { return ctx && key.trim() ? new ethers.Wallet(key.trim()) : null; } catch { return null; }
+    }, [ctx, key]);
+    const ok = Boolean(wallet && wallet.address === PRESENTER);
+    const loadBalance = () => ctx.provider.getBalance(PRESENTER).then(setBalance, (err) => setMessage(errorText(err)));
+    useEffect(() => {
+      setPresenter(ok ? key.trim() : "");
+      setBalance(null);
+      if (ok) loadBalance();
+    }, [ok]);
+    const faucet = async () => {
+      try {
+        await api(PLATFORM, "/faucet", { to: PRESENTER });
+        setMessage("테스트 ETH를 받았어요");
+        await loadBalance();
+      } catch (err) {
+        setMessage(errorText(err));
+      }
+    };
+    const hint = () => {
+      if (!ctx) return message || "불러오는 중…";
+      if (!key) return `시연자 지갑 ${short(PRESENTER)}의 키를 넣어 주세요. 키는 저장하지 않아요.`;
+      if (!wallet) return "키 형식이 아니에요";
+      if (!ok) return `시연자 지갑이 아니에요 (${short(wallet.address)})`;
+      return `시연자 ${short(PRESENTER)} · 잔액 ${balance === null ? "확인 중" : krw(balance)}${message ? ` · ${message}` : ""}`;
+    };
+    return h("div", { style: setupCss.root, onKeyDown: stop, onPointerDown: stop },
+      h(KeyField, { label: "시연자 지갑", value: key, onChange: setKey, hint: hint() }),
+      ok && ctx.config.local && h("div", { style: setupCss.row }, h(Button, { variant: "secondary", onClick: faucet }, "테스트 ETH 받기")));
+  }
+
+  const waitCss = { display: "flex", alignItems: "center", justifyContent: "center", height: "100%", padding: "var(--space-6)", color: "#555", textAlign: "center", lineHeight: 1.5 };
+
+  function Screen({ path, title, box, frame, style }) {
+    const [version, setVersion] = useState(0);
+    const key = usePresenter();
+    return h("div", { style: { ...flowCss.screen, ...style }, onKeyDown: stop, onPointerDown: stop },
+      h("div", { style: box }, key
+        ? h("iframe", { key: version, src: `${SCREENS}${path}?wallet=presenter`, title, loading: "lazy", style: frame })
+        : h("p", { style: waitCss }, "1번 슬라이드에서 시연자 지갑을 먼저 설정해 주세요.")),
+      h(Button, { variant: "secondary", onClick: () => setVersion((v) => v + 1) }, "새로고침"));
+  }
+
+  function FlowSide({ role, path, steps }) {
+    return h("div", { style: flowCss.side },
+      h(Screen, { path, title: `${role} 화면`, box: flowCss.phone, frame: flowCss.frame }),
+      h("div", null,
+        h("h3", null, role),
+        h("ol", { style: flowCss.steps }, steps.map(([title, body]) =>
+          h("li", { key: title }, h("strong", null, title), h("div", { style: flowCss.body }, body))))));
+  }
+
+  const boardCss = {
+    root: { display: "flex", flexDirection: "column", gap: "var(--space-3)", marginTop: "var(--space-3)", minHeight: 0 },
+    bar: { display: "flex", alignItems: "center", gap: "var(--space-3)", color: "var(--color-fg-muted)" },
+    grow: { flex: 1 },
+    fund: { display: "grid", gridTemplateColumns: "2fr 3fr", gap: "var(--space-6)", alignItems: "start" },
+    column: { display: "flex", flexDirection: "column", gap: "var(--space-3)" },
+    split: { display: "grid", gridTemplateColumns: "auto 1fr", gap: "var(--space-8)", alignItems: "start" },
+    side: { display: "flex", flexDirection: "column", gap: "var(--space-3)", minWidth: 0 },
+    cards: { display: "flex", flexDirection: "column", gap: "var(--space-3)" },
+    vote: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", marginTop: "var(--space-1)" },
+    mark: { fontSize: "2.5rem", fontWeight: 700, lineHeight: 1 },
+    card: { display: "flex", flexDirection: "column", gap: "var(--space-2)", padding: "var(--space-3)", border: "var(--border-width-default) solid var(--color-border-default)", borderRadius: "var(--radius-card)", background: "var(--color-bg-surface)" },
+    row: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-2)" },
+    kv: { display: "flex", justifyContent: "space-between", gap: "var(--space-2)", fontSize: "var(--font-size-label)" },
+    actions: { display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-1)" },
+  };
+
+  function useActive() {
+    const ref = useRef(null);
+    const [active, setActive] = useState(false);
+    useEffect(() => {
+      const page = ref.current?.closest(".deck-page");
+      if (!page) return;
+      const check = () => setActive(page.classList.contains("is-current"));
+      check();
+      const observer = new MutationObserver(check);
+      observer.observe(page, { attributes: true, attributeFilter: ["class"] });
+      return () => observer.disconnect();
+    }, []);
+    return [ref, active];
+  }
+
+  function useBoard(load) {
+    const [ref, active] = useActive();
+    const [state, setState] = useState({ phase: "idle" });
+    const [message, setMessage] = useState("");
+    const refresh = async () => {
+      setState((s) => ({ ...s, phase: s.data ? "done" : "loading" }));
+      try { setState({ phase: "done", data: await load() }); }
+      catch (err) { setState({ phase: "error", message: errorText(err) }); }
+    };
+    useEffect(() => { if (active && state.phase === "idle") refresh(); }, [active]);
+    return { ref, state, message, setMessage, refresh };
+  }
+
+  function BoardBar({ children, board }) {
+    return h("div", { style: boardCss.bar },
+      children,
+      h("span", { style: boardCss.grow }, board.state.phase === "error" ? board.state.message : board.message),
+      h(Button, { variant: "secondary", onClick: board.refresh }, "새로고침"));
+  }
+
+  function FundBoard() {
+    const board = useBoard(async () => {
+      const ctx = await connect();
+      const list = await participantsOf(ctx);
+      const balances = await Promise.all(list.map((p) => ctx.provider.getBalance(p.address)));
+      return { ctx, rows: list.map((p, i) => ({ ...p, balance: balances[i] })) };
+    });
+    const [key, setKey] = useState("");
+    const [amount, setAmount] = useState("200");
+    const [sending, setSending] = useState(false);
+    const shared = usePresenter();
+    const { ctx, rows = [] } = board.state.data || {};
+    const wallet = useMemo(() => {
+      try { return ctx && (key.trim() || shared) ? new ethers.Wallet(key.trim() || shared, ctx.provider) : null; } catch { return null; }
+    }, [ctx, key, shared]);
+    const amountWei = (() => { try { return ctx ? krwToWei(amount) : 0n; } catch { return 0n; } })();
+    const waiting = rows.filter((r) => r.balance < amountWei);
+    const send = async () => {
+      setSending(true);
+      try {
+        let nonce = await ctx.provider.getTransactionCount(wallet.address, "pending");
+        const sent = [];
+        for (const r of waiting) sent.push(await wallet.sendTransaction({ to: r.address, value: amountWei - r.balance, nonce: nonce++ }));
+        board.setMessage(`${sent.length}건 보냈어요. 블록을 기다리는 중…`);
+        await Promise.all(sent.map((tx) => tx.wait()));
+        board.setMessage(`${sent.length}명에게 보냈어요`);
+      } catch (err) {
+        board.setMessage(errorText(err));
+      } finally {
+        setSending(false);
+        await board.refresh();
+      }
+    };
+    if (!ctx) return h("div", { ref: board.ref, style: boardCss.root }, h(BoardBar, { board }), h("p", { style: css.empty }, "불러오는 중…"));
+    const status = (r) => r.balance >= amountWei ? h(Badge, { tone: "good" }, "받음") : sending ? h(Badge, { tone: "main" }, "보내는 중") : h(Badge, { tone: "neutral" }, "대기");
+    return h("div", { ref: board.ref, style: boardCss.root, onKeyDown: stop, onPointerDown: stop },
+      h(BoardBar, { board }, h("span", null, ctx.config.local ? "로컬 체인" : "Base Sepolia")),
+      h("div", { style: boardCss.fund },
+        h("div", { style: boardCss.column },
+          h(Stat, { label: "보낼 참여자", value: `${waiting.length}명`, note: `필요한 금액 ${krw(amountWei * BigInt(waiting.length))}` }),
+          h(Callout, { tone: "warning", title: "시연 전용 지갑만 쓰세요" }, "키는 저장하지 않고, 슬라이드를 닫으면 지워져요. 나눠 줄 만큼만 넣어 둔 새 지갑의 키를 넣어 주세요."),
+          h(KeyField, { label: "서명 키", value: key, onChange: setKey, hint: wallet ? `보내는 지갑 ${short(wallet.address)}${key ? "" : " · 1번 슬라이드의 시연자 지갑"}` : key ? "키 형식이 아니에요" : "" }),
+          h(TextField, { label: "1인당 금액 (원)", inputMode: "numeric", value: amount, onChange: setAmount, hint: ethHint(amount) }),
+          h(Button, { variant: "primary", disabled: sending || !wallet || waiting.length === 0 || amountWei === 0n, onClick: send }, sending ? "보내는 중…" : `${waiting.length}명에게 보내기`)),
+        h("div", { style: boardCss.column },
+          h("strong", null, `참여자 ${rows.length}명`),
+          h("table", { style: css.table },
+            h("thead", null, h("tr", null, ["이름", "지갑 주소", "잔액", "상태"].map((th) => h("th", { key: th, style: css.cell }, th)))),
+            h("tbody", null, rows.map((r) => h("tr", { key: r.address },
+              h("td", { style: css.cell }, r.name),
+              h("td", { style: { ...css.cell, ...css.mono } }, short(r.address)),
+              h("td", { style: css.cell }, krw(r.balance)),
+              h("td", { style: css.cell }, status(r)))))))));
+  }
+
+  const ORACLE_EVENTS = [
+    { key: "surf", title: "강릉 풍속 14m/s 이상" },
+    { key: "hotel", title: "숙소 폭우 발생" },
+  ];
+
+  const DECK_ABI = [
+    "function observationHash(uint256 policyId, int256 value) view returns (bytes32)",
+    "function settle(uint256 policyId, int256 value, bytes signature)",
+  ];
+  const BLOCK_TIME = 12;
+
+  function observed(policy, happened) {
+    const threshold = BigInt(policy.condition.threshold);
+    if (happened) return threshold;
+    return Number(policy.condition.comparison) === 0 ? threshold - 1n : threshold + 1n;
+  }
+
+  function OracleBoard() {
+    const board = useBoard(async () => {
+      const ctx = await connect();
+      const [now, all] = await Promise.all([ctx.now(), ctx.policies()]);
+      return { ctx, now, all };
+    });
+    const [key, setKey] = useState("");
+    const [queue, setQueue] = useState({});
+    const busy = useRef(false);
+    const { ctx, now, all = [] } = board.state.data || {};
+    const shared = usePresenter();
+    const wallet = useMemo(() => {
+      if (!ctx) return null;
+      if (!key.trim()) {
+        const fallback = shared ? new ethers.Wallet(shared, ctx.provider) : null;
+        return fallback && fallback.address === ctx.config.oracle ? fallback : null;
+      }
+      try { return new ethers.Wallet(key.trim(), ctx.provider); } catch { return null; }
+    }, [ctx, key, shared]);
+    const signer = wallet && wallet.address === ctx.config.oracle ? wallet : null;
+    const drop = (id) => setQueue((q) => { const next = { ...q }; delete next[id]; return next; });
+
+    const settleOpen = async () => {
+      if (busy.current) return;
+      busy.current = true;
+      try {
+        const insurance = new ethers.Contract(ctx.config.insurance, DECK_ABI, signer);
+        const time = await ctx.now();
+        for (const [id, { value }] of Object.entries(queue)) {
+          const [policy, status] = await Promise.all([ctx.read.policyOf(id), ctx.read.statusOf(id)]);
+          if (Number(status) !== 1 && Number(status) !== 2) { drop(id); continue; }
+          if (time < Number(policy.windowEnd) || time + BLOCK_TIME >= Number(policy.judgingEnd)) continue;
+          const signature = await signer.signMessage(ethers.getBytes(await insurance.observationHash(id, value)));
+          await (await insurance.settle(id, value, signature)).wait();
+          drop(id);
+          board.setMessage(`#${id} 판정에 서명해 보냈어요`);
+        }
+      } catch (err) {
+        board.setMessage(errorText(err));
+      } finally {
+        busy.current = false;
+      }
+      await board.refresh();
+    };
+    useEffect(() => {
+      if (!signer || Object.keys(queue).length === 0) return;
+      settleOpen();
+      const timer = setInterval(settleOpen, 5000);
+      return () => clearInterval(timer);
+    }, [signer, queue]);
+
+    const send = (event, targets, happened) => {
+      const mark = happened ? "O" : "X";
+      setQueue((q) => ({ ...q, ...Object.fromEntries(targets.map((p) => [p.id, { value: observed(p.policy, happened), mark }])) }));
+      board.setMessage(`${event.title}: ${mark}를 ${targets.length}건에 걸었어요. 판정 기간이 열리면 서명해 보내요`);
+    };
+    const jump = async (ts) => {
+      try {
+        await ctx.provider.send("evm_setNextBlockTimestamp", [ts + 1]);
+        await ctx.provider.send("evm_mine", []);
+        board.setMessage("판정 시작으로 옮겼어요");
+      } catch (err) {
+        board.setMessage(errorText(err));
+      }
+      await board.refresh();
+    };
+    const hint = () => {
+      if (!key) return signer ? `1번 슬라이드의 시연자 지갑으로 서명해요 · 오라클 ${short(signer.address)}` : `오라클 ${short(ctx.config.oracle)}의 키를 넣어 주세요. 키는 저장하지 않아요.`;
+      if (!wallet) return "키 형식이 아니에요";
+      return signer ? `오라클 ${short(signer.address)} · 서명 준비됨` : `오라클 주소가 아니에요 (${short(wallet.address)})`;
+    };
+    const card = (event) => {
+      const item = ctx.cases.find((c) => c.key === event.key);
+      if (!item) return null;
+      const mine = all.filter((p) => p.policy.subject === item.subjectId);
+      const targets = mine.filter((p) => p.status === 1 || p.status === 2);
+      const done = mine.filter((p) => p.status === 4 || p.status === 5);
+      const queued = [...new Set(targets.filter((p) => queue[p.id]).map((p) => queue[p.id].mark))];
+      const opens = targets.map((p) => Number(p.policy.windowEnd)).filter((ts) => ts > now);
+      return h("div", { key: event.key, style: boardCss.card },
+        h("div", { style: boardCss.row }, h("strong", null, event.title), queued.length > 0 && h(Badge, { tone: "main" }, `${queued.join("/")} 판정 대기`)),
+        h("span", { style: css.muted }, `${item.title} · ${conditionText(item)}`),
+        h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정할 보험"), h("span", null, targets.length ? targets.map((p) => `#${p.id} ${STATUS[p.status]}`).join(", ") : "없음")),
+        opens.length > 0 && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 시작"), h("span", null, `${when(Math.min(...opens))} · ${left(Math.min(...opens), now)}`)),
+        done.length > 0 && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 끝"), h("span", null, done.map((p) => `#${p.id} ${STATUS[p.status]}`).join(", "))),
+        h("div", { style: boardCss.vote },
+          h(Button, { variant: "primary", disabled: !signer || !targets.length, onClick: () => send(event, targets, true) }, h("span", { style: boardCss.mark }, "O")),
+          h(Button, { variant: "secondary", disabled: !signer || !targets.length, onClick: () => send(event, targets, false) }, h("span", { style: boardCss.mark }, "X"))),
+        ctx.config.local && opens.length > 0 && h(Button, { variant: "secondary", onClick: () => jump(Math.max(...opens)) }, "판정 시작으로 이동"));
+    };
+    return h("div", { ref: board.ref, style: { ...boardCss.root, marginTop: 0 }, onKeyDown: stop, onPointerDown: stop },
+      h(BoardBar, { board }, h("strong", null, "이벤트 발생기"), h("span", null, now ? `체인 시각 ${when(now)}` : "")),
+      board.state.phase === "loading" && h("p", { style: css.empty }, "불러오는 중…"),
+      ctx && h(KeyField, { label: "오라클 서명 키", value: key, onChange: setKey, hint: hint() }),
+      ctx && h("div", { style: boardCss.cards }, ORACLE_EVENTS.map(card)));
+  }
+
+
+
+  const FEE_BPS = 200n;
+
+  function feeOf(p) {
+    if (p.stored !== 4 && p.stored !== 5) return null;
+    const fee = p.policy.usedPremium * FEE_BPS / 10000n;
+    const rest = p.policy.usedPremium - fee - p.policy.unitShare * BigInt(p.policy.soldUnits);
+    return { fee, rest };
+  }
+
+  const feeCss = {
+    total: { display: "flex", flexDirection: "column", gap: "var(--space-3)", padding: "var(--space-8)", borderRadius: "var(--radius-card)", background: "var(--color-bg-surface)", border: "var(--border-width-default) solid var(--color-border-default)" },
+    amount: { fontSize: "5rem", fontWeight: 700, lineHeight: 1.1 },
+    note: { fontSize: "1.5rem", color: "var(--color-fg-secondary)" },
+  };
+
+  function FeeBoard() {
+    const board = useBoard(async () => {
+      const ctx = await connect();
+      return { all: await ctx.policies() };
+    });
+    const { all = [] } = board.state.data || {};
+    if (!board.state.data) return h("div", { ref: board.ref, style: boardCss.root }, h(BoardBar, { board }), h("p", { style: css.empty }, "불러오는 중…"));
+    const settled = all.map(feeOf).filter(Boolean);
+    const total = settled.reduce((sum, cut) => sum + cut.fee + cut.rest, 0n);
+    return h("div", { ref: board.ref, style: boardCss.root, onKeyDown: stop, onPointerDown: stop },
+      h(BoardBar, { board }),
+      h("div", { style: feeCss.total },
+        h("span", { style: css.muted }, "받은 수수료"),
+        h("span", { style: feeCss.amount }, krw(total)),
+        h("span", { style: feeCss.note }, `정산된 보험 ${settled.length}건에서 받았어요`)));
+  }
+
+
+  const problemCss = {
+    grid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-6)", marginTop: "var(--space-8)" },
+    card: { display: "flex", flexDirection: "column", gap: "var(--space-5)", minHeight: "23rem", padding: "var(--space-8)", borderRadius: "var(--radius-card)", border: "var(--border-width-default) solid var(--color-border-default)", background: "var(--color-bg-surface)" },
+    index: { fontSize: "1.5rem", fontWeight: 700, color: "var(--color-main-default)" },
+    label: { fontSize: "2.5rem", lineHeight: 1.3 },
+    body: { margin: 0, fontSize: "1.875rem", lineHeight: 1.6, color: "var(--color-fg-secondary)" },
+    banner: { margin: "var(--space-8) 0 0", padding: "var(--space-8)", borderRadius: "var(--radius-card)", background: "var(--color-main-subtle)", fontSize: "2.125rem", fontWeight: 700, lineHeight: 1.4 },
+  };
+
+  const qrMask = "url(demo-qr.svg) center / contain no-repeat";
+  const qrCss = { width: "100%", aspectRatio: "1 / 1", background: "var(--color-fg-default)", mask: qrMask, WebkitMask: qrMask };
+
   const diagramSlide = (title, takeaway, diagram, points, notes) =>
     h(SplitSlide, { title, takeaway, ratio: "3:2", left: diagram, right: h(Bullets, { items: points }), notes });
 
@@ -137,82 +664,89 @@
         tone: "dark",
         kicker: "블록체인기술과 응용 · 기말 프로젝트 · 2조",
         title: "Trip Insurance",
-        subtitle: "누구나 보험에 들고, 누구나 투자자가 된다",
-        meta: "판단은 계약 전에, 지급은 코드가",
+        subtitle: "누구나 보험에 들고, 누구나 투자자가 될 수 있어요",
+        meta: h("div", null, h("div", null, "판단은 계약 전에, 지급은 코드가"), h(PresenterSetup)),
       }),
-      h(AgendaSlide, { title: "목차", items: ["문제", "해결 방안", "서비스 흐름", "구성과 구현 선택", "시연"], current: 0 }),
-      h(SplitSlide, {
-        title: "문제",
-        takeaway: "기존 여행자 보험은 필요 없는 보장까지 사고, 지급은 사고 뒤에 사람이 정한다.",
-        ratio: "3:2",
-        left: h(Bullets, { items: [
-          "상품 중심: 보험사가 만든 상품을 골라야 해 필요 없는 보장까지 함께 산다",
-          "사후 판정: 사고 뒤 보험사가 보장 여부를 판단해 지급 거절과 분쟁이 생긴다",
-          "단발성 공백: 하루짜리 일정(KTX · 숙소 · 체험)의 취소 위험은 상품이 없거나 가입이 번거롭다",
-        ] }),
-        right: h("p", null, "예약한 일정이 틀어졌을 때, 낸 돈을 조건만 맞으면 바로 돌려받을 수 있어야 한다."),
-        notes: "기존 보험의 세 가지 불편을 짚는다.",
-      }),
-      h(Slide, { notes: "세 원칙이 서비스의 핵심이다." },
-        h(SlideHeader, { title: "해결 방안" }),
-        h(Takeaway, null, "판단은 계약 전에 끝내고, 지급은 코드가 한다."),
-        h(Steps, { items: [
-          { title: "사전 판단", body: "구매자가 보장 조건과 보험료를 계약 전에 정한다." },
-          { title: "시장 가격", body: "보장금액은 투자자들의 입찰 경쟁이 정한다." },
-          { title: "코드 지급", body: "오라클 관측값이 조건에 맞으면 사람의 승인 없이 지급한다." },
-          { title: "누구나 투자", body: "보험 한 건을 지분 100개로 나눠 소액으로 참여한다." },
-        ] }),
+      h(Slide, { notes: "기존 보험의 불편한 점 세 가지를 짚어요." },
+        h(SlideHeader, { title: "여행자 보험, 이런 점이 불편했어요" }),
+        h(Takeaway, null, "필요 없는 보장까지 사야 하고, 보험금은 사고가 난 뒤에 사람이 정해요."),
+        h("div", { style: problemCss.grid }, [
+          ["상품 중심", "보험사가 만든 상품 중에서 골라야 해서, 필요 없는 보장까지 함께 사게 돼요."],
+          ["사후 판정", "사고가 나고 나서 보험사가 보장 여부를 판단해요. 그래서 지급 거절과 분쟁이 생겨요."],
+          ["단발성 공백", "KTX, 숙소, 체험처럼 하루짜리 일정은 보험 상품이 없거나 가입이 번거로워요."],
+        ].map(([label, body], i) => h("div", { key: label, style: problemCss.card },
+          h("span", { style: problemCss.index }, String(i + 1).padStart(2, "0")),
+          h("strong", { style: problemCss.label }, label),
+          h("p", { style: problemCss.body }, body)))),
+        h("p", { style: problemCss.banner }, "예약한 일정이 틀어지면, 조건만 맞을 때 낸 돈을 바로 돌려받을 수 있어야 해요."),
       ),
-      diagramSlide("서비스 흐름", "구매자와 투자자는 블록체인과만 주고받고, 일정 결과는 오라클이 전한다.", overview, ["① 구매자가 보험료를 맡기고 가입한다", "③ 투자자가 입찰금을 예치한다", "⑤ 마감 뒤 보장금액과 낙찰 지분이 확정된다", "⑦ 오라클이 관측값에 서명한다", "⑧ 결과대로 보장금 · 보험료 몫 · 수수료를 나눈다"], "번호 순서대로 가입 → 입찰 → 체결 → 판정 → 정산을 설명한다."),
-      diagramSlide("가입", "구매자는 비용 NFT로 예약을 증명하고 보험료 · 보장 조건 · 최소 보장금액을 정한다.", joinFlow, ["보험료: 무사하면 투자자의 수익", "비용 NFT: 예약과 결제 금액 증명", "보장 조건: 오라클 관측값과 기준", "최소 보장금액: 경매 시작가", "NFT를 가진 사람만 가입한다"], "비용 NFT를 가진 사람만 가입할 수 있다."),
-      diagramSlide("경매", "지분당 보장금액이 높은 입찰부터 지분 100개를 채우고, 각자 부른 금액으로 보장한다.", auctionFlow, ["지분 100개, 시작가는 최소 보장금액의 1/100", "지분 수 × 지분당 보장금액만큼 예치한다", "높은 금액부터 배정하고 각자 부른 금액으로 보장한다", "배정받지 못한 예치금은 환불한다", "다 안 팔리면 팔린 만큼만 계약한다"], "예시: A 60개, B 40개 낙찰, C는 탈락해 예치금을 돌려받는다."),
-      diagramSlide("판정", "가입 때 정한 기준과 오라클 관측값을 비교해 지급 · 만료를 정하고, 관측값이 없으면 무효다.", judgeFlow, ["조건에 지정된 오라클의 서명만 인정한다", "충족이면 지급, 미충족이면 만료", "기간 안에 관측값이 없으면 무효", "사람의 승인 · 분쟁 절차가 없다"], "판정에는 사람의 승인이나 분쟁 절차가 없다."),
-      diagramSlide("정산", "정산된 ETH는 주소별 잔액에 쌓이고, 각자 출금한다. 체결 보험료의 2%는 플랫폼 수수료다.", settleFlow, ["지급: 구매자가 보장금액 전액", "만료: 투자자가 예치금 + 보험료 몫", "무효 · 유찰: 양쪽 전액 환불", "체결 보험료의 2%는 플랫폼 수수료", "받을 ETH는 각자 출금한다"], "지급이면 구매자가 보장금액 전액, 만료면 투자자가 예치금과 보험료 몫을 받는다."),
-      diagramSlide("구성", "컨트랙트 하나가 자산과 판정을 맡고, Mock 서버는 비용 NFT와 관측값만 공급한다.", architecture, ["보험 컨트랙트: 자산 보관과 규칙 실행", "비용 NFT: 예약 증명", "발급사 · 오라클 서버: Mock, 데이터만 공급", "실제 서비스로 바꿔도 컨트랙트는 그대로"], "실제 발급사와 오라클 대신 Mock 서버를 쓴다. 컨트랙트는 실제 서비스로 바꿔도 그대로다."),
-      h(TableSlide, {
-        title: "구현 선택과 한계",
-        takeaway: "시간에 따른 상태 전환은 서버 없이 지연 실행하고, 자산은 각자 출금한다.",
-        table: {
-          columns: [{ label: "주제" }, { label: "선택", wrap: true }, { label: "한계 · 대응", wrap: true }],
-          rows: [
-            ["시간", "마감 배정 · 판정 뒤 무효를 첫 트랜잭션이 지연 실행", "첫 호출자가 배정 가스비를 낸다"],
-            ["경매", "공개 입찰, 마감 때 한 번에 정렬", "입찰 200건이면 배정에 약 1,325만 가스, 보험당 입찰 200건 제한"],
-            ["판정", "조건 오라클의 서명만 인정, 누구나 제출", "판정은 오라클 정확도만큼 정확하다"],
-            ["정산", "주소별 잔액 적립 후 각자 출금 (pull)", "출금 트랜잭션이 한 번 더 필요하다"],
-            ["외부 연동", "발급사 · 오라클은 로컬 Mock 서버", "실제 예약 발급사와 데이터 제공자로 바꿀 자리로 둔다"],
-          ],
-        },
-      }),
-      h(TableSlide, {
-        title: "사용 기술과 역할",
-        takeaway: "Solidity 컨트랙트와 Node Mock 서버, 웹 화면으로 Base Sepolia 테스트넷에서 시연한다.",
-        table: {
-          columns: [{ label: "역할" }, { label: "맡은 일", wrap: true }],
-          rows: [
-            ["조장", "과제 총괄 · 정책 확정 · 컨트랙트 개발 (가입 · 경매 · 판정 · 정산) · 통합"],
-            ["조원 1", "정책 로직 구현 (보장 조건 · 배정 규칙 · 수수료) · 기준값 검증"],
-            ["조원 2", "기획 제안 · 테스트 · 보안 검토 (경매 경계값 · 판정 기간 · 오라클 서명 · 재진입)"],
-            ["조원 3", "배포 · 화면 · 문서 (로컬 체인, 지갑 연동, 가입 · 입찰 화면, Mock 오라클 시연)"],
-            ["기술", "Solidity · Foundry · anvil · Node · ethers · ui 디자인 시스템"],
-          ],
-        },
-      }),
+      diagramSlide("블록체인으로 해결하기", "판단은 계약 전에 끝내고, 지급은 코드가 해요.", overview, [
+        "사전 판단: 구매자가 계약 전에 보장 조건과 보험료를 정해요",
+        "시장 가격: 지분 100개를 지분당 보장금액이 높은 입찰부터 나눠요",
+        "코드 지급: 오라클 관측값이 조건에 맞으면 승인 없이 바로 지급해요",
+        "누구나 투자: 적은 돈으로 지분을 사서 보험료를 나눠 받아요",
+      ], "번호 순서대로 가입 → 입찰 → 체결 → 판정 → 정산을 설명해요."),
+      diagramSlide("아키텍처", "자산과 판정은 컨트랙트 하나가 맡고, Mock 서버는 비용 NFT와 관측값만 공급해요.", architecture, [
+        "보험 컨트랙트: 자산을 보관하고 규칙을 실행해요",
+        "비용 NFT: 예약을 증명해요",
+        "발급사 · 오라클 서버: Mock 서버로, 데이터만 공급해요",
+        "마감 뒤 상태 전환은 다음 호출 때 함께 처리해요",
+        "정산 금액은 주소별 잔액에 쌓이고, 각자 출금해요",
+      ], "실제 발급사와 오라클로 바꿔도 컨트랙트는 그대로 써요."),
+      h(Slide, { notes: "화면은 실제 시연 페이지예요. 직접 눌러 보면서 흐름을 설명해요." },
+        h(SlideHeader, { title: "구매자와 투자자의 화면" }),
+        h(Takeaway, null, "구매자는 예약으로 보험을 들고, 투자자는 지분을 사서 보험료를 나눠 받아요."),
+        h("div", { style: flowCss.sides },
+          h(FlowSide, { role: "구매자", path: "buy/", steps: [
+            ["예약 불러오기", "예약 앱에서 예약 NFT를 가져와요."],
+            ["보험 들기", "조건과 보험료를 확인하고 가입해요."],
+            ["체결 확인", "입찰이 마감되면 보장금액이 정해져요."],
+            ["출금", "조건을 충족하면 보장금을 출금해요."],
+          ] }),
+          h(FlowSide, { role: "투자자", path: "", steps: [
+            ["보험 고르기", "입찰할 수 있는 보험과 조건을 살펴봐요."],
+            ["입찰", "지분 수와 지분당 보장금액을 정해 입찰해요."],
+            ["낙찰 확인", "보장금액이 높은 입찰부터 지분을 받아요."],
+            ["출금", "보험이 만료되면 보험료 몫을 출금해요."],
+          ] }))),
       h(SplitSlide, {
-        title: "시연",
-        takeaway: "QR로 참여해 직접 투자자가 되어 본다.",
-        notes: "참여자가 모이면 분배 화면에서 ETH를 보내고, 발표자가 보험에 가입한 뒤 오라클 화면에서 판정한다.",
+        title: "시연 참여",
+        takeaway: "QR로 들어와서 직접 투자자가 되어 보세요.",
+        notes: "참여자가 이름을 입력하는 동안, 다음 슬라이드에서 ETH를 보내요.",
         ratio: "3:2",
         left: h(Steps, { items: [
-          { title: "참여", body: "QR을 찍고 이름을 입력하면 폰에 지갑이 생긴다." },
-          { title: "가입", body: "발표자가 예약을 불러와 보험에 가입한다." },
-          { title: "입찰", body: "참여자가 지분 수와 지분당 보장금액을 부른다." },
-          { title: "판정 · 출금", body: "오라클 판정에 따라 투자자나 구매자가 출금한다." },
+          { title: "참여", body: "QR을 찍고 이름을 입력하면 휴대폰에 지갑이 생겨요." },
+          { title: "입찰", body: "보험이 올라오면 지분 수와 지분당 보장금액을 정해 입찰해요." },
+          { title: "출금", body: "판정이 나면 받을 금액을 출금해요." },
         ] }),
-        right: h(Figure, { caption: "hab56ur9.github.io/trip-insurance/demo" }, h(Image, { src: "demo-qr.svg", alt: "시연 참여 QR", ratio: "1:1", fit: "contain" })),
+        right: h(Figure, { caption: "hab56ur9.github.io/trip-insurance/demo" }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss })),
       }),
+      h(Slide, { notes: "참여자 목록이 모이면 한 번에 ETH를 보내요." },
+        h(SlideHeader, { title: "참여자에게 ETH 보내기" }),
+        h(Takeaway, null, "발표자 지갑에서 참여자 지갑으로 입찰에 쓸 ETH를 보내요."),
+        h(FundBoard),
+      ),
+      h(Slide, { notes: "왼쪽 구매자 화면에서 보험을 들어요. 입찰이 끝나면 오른쪽 이벤트 발생기에 오라클 키를 넣고 사건마다 O 또는 X를 눌러요. 판정 기간이 열리면 덱이 서명해서 보내요." },
+        h("div", { style: boardCss.split },
+          h(Screen, { path: "buy/", title: "구매자 화면", box: phoneBox(BIG_PHONE), frame: phoneFrame(BIG_PHONE), style: { flexDirection: "row", alignItems: "flex-end" } }),
+          h("div", { style: boardCss.side },
+            h(SlideHeader, { title: "보험 가입과 오라클 판정" }),
+            h(Takeaway, null, "오라클이 관측값에 서명해서 보내면, 컨트랙트가 지급할지 만료할지 정해요."),
+            h(OracleBoard))),
+      ),
+      h(Slide, { notes: "가입자 주소를 넣으면 그 주소의 최신 보험이 블록 순서대로 보여요." },
+        h(SlideHeader, { title: "보험 한 건의 기록" }),
+        h(Takeaway, null, "가입부터 청구까지 모든 단계가 블록에 남아서, 주소 하나로 누구나 확인할 수 있어요."),
+        h(PolicyHistory),
+      ),
+      h(Slide, { notes: "정산이 끝난 보험마다 체결 보험료의 2%와 끝전이 플랫폼 지갑 크레딧으로 쌓여요." },
+        h(SlideHeader, { title: "플랫폼 수수료" }),
+        h(Takeaway, null, "보험이 정산될 때마다 체결 보험료의 2%가 플랫폼 지갑으로 들어와요."),
+        h(FeeBoard),
+      ),
       h(ClosingSlide, {
         title: "감사합니다",
-        items: ["판단은 계약 전에, 지급은 코드가", "지분 100개 오름 입찰로 누구나 투자", "시간 전환은 지연 실행, 자산은 각자 출금"],
+        items: ["판단은 계약 전에 끝내고, 지급은 코드가 해요", "지분 100개를 경매해서 누구나 투자할 수 있어요", "모든 단계가 블록에 남아요"],
       }),
     ),
     { theme: themes.sky.minimal, lang: "ko" },

@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121s">
+<link rel="stylesheet" href="../app.css?v=20261121t">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121s"></script>
+<script src="../shared.js?v=20261121t"></script>
 </head>
 <body>
 <main>
@@ -16,6 +16,7 @@
       <select id="walletMode" aria-label="지갑">
         <option value="4">구매자 #4</option>
         <option value="temp">내 임시 지갑</option>
+        <option value="presenter">시연자</option>
       </select>
     </span>
   </div>
@@ -63,7 +64,7 @@
 
 <script>
 (async () => {
-  const ctx = await setup({ defaultRole: 4 });
+  const ctx = await setup();
   let joining = null;
   let loaded = false;
 
@@ -173,8 +174,9 @@
     $("addBtn").hidden = credits === 0n;
 
     const byToken = new Map(all.filter((p) => p.policy.insured === ctx.address).map((p) => [Number(p.policy.tokenId), p]));
-    $("trips").innerHTML = loaded && bookings.length
-      ? bookings.slice().reverse().map((b) => tripCard(b, byToken.get(b.tokenId), now)).join("")
+    const shown = bookings.filter((b) => byToken.has(b.tokenId) || Number(b.booking.start) - now > ctx.config.minGap + 60);
+    $("trips").innerHTML = loaded && shown.length
+      ? shown.slice().reverse().map((b) => tripCard(b, byToken.get(b.tokenId), now)).join("")
       : `<div class="empty">예약 앱에서 내 예약을 불러와 보험을 들어요.</div>`;
     document.querySelectorAll("[data-join]").forEach((el) => (el.onclick = () => joinSheet(bookings.find((b) => b.tokenId === Number(el.dataset.join)), now)));
     document.querySelectorAll("[data-bind]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.bind(el.dataset.bind))) && ctx.refresh()));
