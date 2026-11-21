@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261121u">
+<link rel="stylesheet" href="../app.css?v=20261121v">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261121u"></script>
+<script src="../shared.js?v=20261121v"></script>
 </head>
 <body>
 <main>
@@ -171,6 +171,7 @@
     $("credits").innerHTML = money(credits);
     $("mainBtn").textContent = credits > 0n ? "출금하기" : "내 예약 불러오기";
     $("mainBtn").dataset.mode = credits > 0n ? "withdraw" : "book";
+    showImport();
     $("addBtn").hidden = credits === 0n;
 
     const byToken = new Map(all.filter((p) => p.policy.insured === ctx.address).map((p) => [Number(p.policy.tokenId), p]));
@@ -183,18 +184,32 @@
     document.querySelectorAll("[data-void]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.voidPolicy(el.dataset.void))) && ctx.refresh()));
   };
 
+  let importing = "";
+  function showImport() {
+    $("addBtn").textContent = importing || "예약 불러오기";
+    $("addBtn").disabled = Boolean(importing);
+    if ($("mainBtn").dataset.mode === "withdraw") return;
+    $("mainBtn").textContent = importing || "내 예약 불러오기";
+    $("mainBtn").disabled = Boolean(importing);
+  }
+
   async function importBookings() {
+    if (importing) return;
+    importing = "불러오는 중…";
+    showImport();
     try {
-      $("mainBtn").disabled = true;
-      toast("예약 앱에서 불러오는 중…");
-      await ctx.importBookings();
+      await ctx.importBookings((done, total) => {
+        importing = `불러오는 중 (${done}/${total})`;
+        showImport();
+      });
       loaded = true;
       toast("내 예약을 불러왔어요");
-      ctx.refresh();
     } catch (e) {
       toast(e.message, true);
     } finally {
-      $("mainBtn").disabled = false;
+      importing = "";
+      showImport();
+      ctx.refresh();
     }
   }
   $("addBtn").onclick = importBookings;

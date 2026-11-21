@@ -44,7 +44,7 @@ const TEST_KEYS = {
 };
 
 const PRESENTER = "0xc4DA565aE85053AEc2EF667C28a2AD787CD79bD6";
-const BOOKING_START_AFTER = 600;
+const BOOKING_START_AFTER = 900;
 const BOOKING_DURATION = 60;
 
 const QUERY = new URLSearchParams(location.search);
@@ -220,7 +220,7 @@ async function setup() {
     );
   };
 
-  ctx.importBookings = async () => {
+  ctx.importBookings = async (onProgress = () => {}) => {
     if (NETWORK === "local") return api(PLATFORM, "/bookings/import", { to: ctx.address });
     if ((await ctx.nft.issuer()) !== ctx.address) throw new Error("예약은 시연자 지갑으로만 불러올 수 있어요");
     const now = await ctx.now();
@@ -232,14 +232,13 @@ async function setup() {
     const bookings = await Promise.all(mine.map((id) => ctx.nft.bookingOf(id)));
     const open = new Set(bookings.filter((b) => Number(b.start) - now > config.minGap + 60).map((b) => b.subject));
     const nft = new ethers.Contract(config.nft, NFT_ABI, ctx.wallet);
-    let added = 0;
-    for (const item of cases) {
-      if (open.has(item.subjectId)) continue;
+    const missing = cases.filter((item) => !open.has(item.subjectId));
+    for (const [i, item] of missing.entries()) {
+      onProgress(i + 1, missing.length);
       const start = now + BOOKING_START_AFTER;
       await (await nft.mint(ctx.address, item.subjectId, start, start + BOOKING_DURATION, ethers.parseEther(item.amountEth))).wait();
-      added++;
     }
-    return { added };
+    return { added: missing.length };
   };
 
   ctx.gasBanner = async () => {
