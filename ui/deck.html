@@ -484,7 +484,9 @@
           h(TextField, { label: "1인당 금액 (원)", inputMode: "numeric", value: amount, onChange: setAmount, hint: ethHint(amount) }),
           h(Button, { variant: "primary", disabled: sending || !wallet || waiting.length === 0 || amountWei === 0n, onClick: send }, sending ? "보내는 중…" : `${waiting.length}명에게 보내기`)),
         h("div", { style: boardCss.column },
-          h("strong", null, `참여자 ${rows.length}명`),
+          h("div", { style: { display: "flex", alignItems: "baseline", gap: "var(--space-3)" } },
+            h("strong", null, `참여자 ${rows.length}명`),
+            h("a", { href: PARTICIPANT_SHEET, target: "_blank", rel: "noopener", style: sheetLinkCss }, "참여자 시트 열기 ↗")),
           h("table", { style: css.table },
             h("thead", null, h("tr", null, ["이름", "지갑 주소", "잔액", "상태"].map((th) => h("th", { key: th, style: css.cell }, th)))),
             h("tbody", null, rows.map((r) => h("tr", { key: r.address },
@@ -567,16 +569,6 @@
       setQueue((q) => ({ ...q, ...Object.fromEntries(targets.map((p) => [p.id, { value: observed(p.policy, happened), mark }])) }));
       board.setMessage(`${event.title}: ${mark}를 ${targets.length}건에 걸었어요. 판정 기간이 열리면 서명해 보내요`);
     };
-    const jump = async (ts) => {
-      try {
-        await ctx.provider.send("evm_setNextBlockTimestamp", [ts + 1]);
-        await ctx.provider.send("evm_mine", []);
-        board.setMessage("판정 시작으로 옮겼어요");
-      } catch (err) {
-        board.setMessage(errorText(err));
-      }
-      await board.refresh();
-    };
     const hint = () => {
       if (!key) return signer ? `1번 슬라이드의 시연자 지갑으로 서명해요 · 오라클 ${short(signer.address)}` : `오라클 ${short(ctx.config.oracle)}의 키를 넣어 주세요. 키는 저장하지 않아요.`;
       if (!wallet) return "키 형식이 아니에요";
@@ -598,8 +590,7 @@
         done.length > 0 && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 끝"), h("span", null, done.map((p) => `#${p.id} ${STATUS[p.status]}`).join(", "))),
         h("div", { style: boardCss.vote },
           h(Button, { variant: "primary", disabled: !signer || !targets.length, onClick: () => send(event, targets, true) }, h("span", { style: boardCss.mark }, "O")),
-          h(Button, { variant: "secondary", disabled: !signer || !targets.length, onClick: () => send(event, targets, false) }, h("span", { style: boardCss.mark }, "X"))),
-        ctx.config.local && opens.length > 0 && h(Button, { variant: "secondary", onClick: () => jump(Math.max(...opens)) }, "판정 시작으로 이동"));
+          h(Button, { variant: "secondary", disabled: !signer || !targets.length, onClick: () => send(event, targets, false) }, h("span", { style: boardCss.mark }, "X"))));
     };
     return h("div", { ref: board.ref, style: { ...boardCss.root, marginTop: 0 }, onKeyDown: stop, onPointerDown: stop },
       h(BoardBar, { board }, h("strong", null, "이벤트 발생기"), h("span", null, now ? `체인 시각 ${when(now)}` : "")),
@@ -654,6 +645,9 @@
 
   const qrMask = "url(demo-qr.svg) center / contain no-repeat";
   const qrCss = { width: "100%", aspectRatio: "1 / 1", background: "var(--color-fg-default)", mask: qrMask, WebkitMask: qrMask };
+  const PARTICIPANT_SHEET = "https://docs.google.com/spreadsheets/d/17uoShUF5rRjHvShJJJp6oFv6TBxh5q4lAwvHbxQBVp4/edit";
+  const sheetLinkCss = { color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)", textDecoration: "underline" };
+  const cornerQrCss = { position: "absolute", top: "var(--space-8)", right: "var(--space-8)", width: "9rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-1)", color: "var(--color-fg-muted)", fontSize: "var(--font-size-label)" };
 
   const diagramSlide = (title, takeaway, diagram, points, notes) =>
     h(SplitSlide, { title, takeaway, ratio: "3:2", left: diagram, right: h(Bullets, { items: points }), notes });
@@ -722,6 +716,7 @@
         right: h(Figure, { caption: "hab56ur9.github.io/trip-insurance/demo" }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss })),
       }),
       h(Slide, { notes: "참여자 목록이 모이면 한 번에 ETH를 보내요." },
+        h("div", { style: cornerQrCss }, h("div", { role: "img", "aria-label": "시연 참여 QR", style: qrCss }), "아직 못 들어왔다면"),
         h(SlideHeader, { title: "참여자에게 ETH 보내기" }),
         h(Takeaway, null, "발표자 지갑에서 참여자 지갑으로 입찰에 쓸 ETH를 보내요."),
         h(FundBoard),
