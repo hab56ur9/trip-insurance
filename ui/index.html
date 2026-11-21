@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보험 투자</title>
-<link rel="stylesheet" href="app.css?v=20261121k">
+<link rel="stylesheet" href="app.css?v=20261121r">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="shared.js?v=20261121k"></script>
+<script src="shared.js?v=20261121r"></script>
 </head>
 <body>
 <main>
@@ -21,13 +21,14 @@
       </select>
     </span>
   </div>
-  <nav class="nav" id="nav"><a href="buyer.html">보험</a><a class="on" href="investor.html">투자</a></nav>
+  <nav class="nav" id="nav"><a href="buy/">보험</a><a class="on" href="./">투자</a></nav>
 
   <section data-view="home">
     <div class="hero" id="hero" hidden>
       <div class="label">받을 수 있는 금액</div>
       <div class="big" id="credits">—</div>
     </div>
+    <div class="card" id="wait" hidden><div class="title">시연자가 ETH를 보내 주길 기다리는 중이에요</div><div class="meta">받으면 입찰할 수 있어요. 테스트넷 ETH라 실제 돈은 아니에요.</div></div>
     <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">테스트 ETH를 한 번 받을 수 있어요.</div></span><button class="btn sm" id="gasBtn">받기</button></div></div>
     <div class="section">
       <h2>입찰할 수 있는 보험</h2>
@@ -38,6 +39,19 @@
       <div id="mine"><div class="empty">불러오는 중…</div></div>
     </div>
     <div class="cta" id="homeCta" hidden><div class="inner"><button class="btn" id="withdrawBtn">출금하기</button></div></div>
+  </section>
+
+  <section data-view="join" hidden>
+    <div class="hero">
+      <div class="label">시연에 참여하려면</div>
+      <div class="big">이름을 알려 주세요</div>
+      <div class="sub">이 폰에 지갑이 하나 만들어지고, 시연자가 그 지갑으로 입찰에 쓸 ETH를 보내 줘요.</div>
+    </div>
+    <div class="field">
+      <label for="joinName">이름</label>
+      <input id="joinName" maxlength="20" autocomplete="name" placeholder="홍길동">
+    </div>
+    <div class="cta"><div class="inner"><button class="btn" id="doJoin">참여하기</button></div></div>
   </section>
 
   <section data-view="bid" hidden>
@@ -66,7 +80,8 @@
 <script>
 (async () => {
   const ctx = await setup({ defaultRole: 5 });
-  const show = createViews({ home: "보험 투자", bid: "입찰하기" });
+  const show = createViews({ home: "보험 투자", bid: "입찰하기", join: "시연 참여" });
+  const participants = ctx.config.participants;
   let bidding = null;
   let policies = [];
 
@@ -168,6 +183,7 @@
     const [credits, all] = await Promise.all([ctx.read.credits(ctx.address), ctx.policies()]);
     policies = all;
     await ctx.gasBanner();
+    $("wait").hidden = !participants || (await ctx.provider.getBalance(ctx.address)) > 0n;
     $("hero").hidden = credits === 0n;
     $("homeCta").hidden = credits === 0n;
     $("credits").innerHTML = money(credits);
@@ -182,6 +198,29 @@
   };
 
   $("withdrawBtn").onclick = async () => (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
+
+  $("doJoin").onclick = async () => {
+    const name = $("joinName").value.trim();
+    if (!name) return toast("이름을 입력해 주세요", true);
+    $("doJoin").disabled = true;
+    try {
+      const result = await api(participants, "", { address: ctx.address, name });
+      if (!result.ok) throw new Error(result.full ? "참여 인원이 가득 찼어요" : "참여하지 못했어요");
+      toast(`${name}님, 참여했어요`);
+      show("home", false);
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      $("doJoin").disabled = false;
+    }
+  };
+  if (participants) {
+    const joined = (await api(participants, "")).some((p) => p.address.toLowerCase() === ctx.address.toLowerCase());
+    if (!joined) {
+      show("join", false);
+      $("back").hidden = true;
+    }
+  }
   await ctx.refresh();
   setInterval(() => !document.hidden && ctx.refresh().catch(() => {}), 4000);
 })().catch((e) => toast(e.message || String(e), true));

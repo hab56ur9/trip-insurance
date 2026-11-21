@@ -1,12 +1,10 @@
-const { getAddress, isAddress, parseEther, formatEther, NonceManager, id } = require("ethers");
-const { CASES, caseOf } = require("./cases");
+const { getAddress, isAddress, parseEther, formatEther, NonceManager } = require("ethers");
+const { CASES, caseOf, subjectOf, catalog } = require("./cases");
 const { createJsonServer, RequestError } = require("./http");
 
 const FAUCET_ETH = process.env.FAUCET_ETH || "0.05";
 const START_AFTER = Number(process.env.BOOKING_START_AFTER || 30 * 60);
 const DURATION = Number(process.env.BOOKING_DURATION || 60 * 60);
-
-const subjectOf = (item) => id(`${item.key}:${item.subject}`);
 
 function createPlatform({ chain, log = () => {} }) {
   const issuer = new NonceManager(chain.wallets.issuer);
@@ -65,17 +63,15 @@ function createPlatform({ chain, log = () => {} }) {
     }
   }
 
-  const cases = () => CASES.map((item) => ({ ...item, subjectId: subjectOf(item), kindId: id(item.kind) }));
-
   const routes = {
-    "GET /cases": cases,
-    "GET /config": () => ({ ...chain.addresses, chainId: chain.chainId, local: chain.local, rpc: chain.publicRpc, oracle: chain.wallets.oracle.address }),
+    "GET /cases": catalog,
+    "GET /config": () => ({ ...chain.addresses, chainId: chain.chainId, local: chain.local, rpc: chain.publicRpc, oracle: chain.wallets.oracle.address, participants: process.env.PARTICIPANTS_URL || "" }),
     "POST /bookings": book,
     "POST /bookings/import": importBookings,
     "POST /faucet": faucet,
   };
 
-  return { book, importBookings, faucet, cases, serve: (port, host = "127.0.0.1") => createJsonServer(routes, log).listen(port, host) };
+  return { book, importBookings, faucet, cases: catalog, serve: (port, host = "127.0.0.1") => createJsonServer(routes, log).listen(port, host) };
 }
 
 module.exports = { createPlatform, subjectOf };

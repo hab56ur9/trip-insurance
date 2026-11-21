@@ -12,9 +12,9 @@ python3 -m http.server 8099 --bind 0.0.0.0     # 레포 루트에서
 ```
 
 ```text
-구매자   http://<노트북 주소>:8099/ui/buyer.html
-투자자   http://<노트북 주소>:8099/ui/investor.html
-발표자   http://127.0.0.1:8099/ui/oracle.html     오라클 API는 노트북에서만 열린다
+투자자   http://<노트북 주소>:8099/ui/
+구매자   http://<노트북 주소>:8099/ui/buy/
+발표자   http://127.0.0.1:8099/ui/oracle/     오라클 API는 노트북에서만 열린다
 ```
 
 ## 시나리오 1: 일정이 무사함 → 투자자가 보험료를 받음

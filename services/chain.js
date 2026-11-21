@@ -46,8 +46,8 @@ const LOCAL_SERVICE_ROLES = { issuer: "issuer", oracle: "oracle", faucet: "deplo
 function serviceWallets(provider, local) {
   return Object.fromEntries(
     Object.entries(SERVICE_KEYS).map(([role, env]) => {
-      const key = process.env[env] || (local ? ANVIL_KEYS[ROLES[LOCAL_SERVICE_ROLES[role]]] : null);
-      if (!key) throw new Error(`${env} is required outside the local chain`);
+      const key = process.env[env] || (local ? ANVIL_KEYS[ROLES[LOCAL_SERVICE_ROLES[role]]] : process.env.UNSAFE_DEMO_KEY);
+      if (!key) throw new Error(`${env} or UNSAFE_DEMO_KEY is required outside the local chain`);
       return [role, new Wallet(key, provider)];
     })
   );
@@ -58,6 +58,7 @@ async function connect(rpc = process.env.RPC || "http://127.0.0.1:8545") {
   const network = await provider.getNetwork();
   const chainId = Number(network.chainId);
   const local = chainId === LOCAL_CHAIN_ID;
+  if (!local) provider.pollingInterval = 2000;
   const addresses = deployment(chainId);
   const wallets = local
     ? Object.fromEntries(Object.entries(ROLES).map(([role, index]) => [role, new Wallet(ANVIL_KEYS[index], provider)]))
@@ -70,7 +71,7 @@ async function connect(rpc = process.env.RPC || "http://127.0.0.1:8545") {
     provider,
     chainId,
     local,
-    publicRpc: process.env.PUBLIC_RPC || "",
+    publicRpc: process.env.PUBLIC_RPC || (local ? "" : rpc),
     addresses,
     wallets,
     insurance,

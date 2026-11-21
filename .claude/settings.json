@@ -5,8 +5,8 @@
   "extraKnownMarketplaces": {
     "trip-insurance": {
       "source": {
-        "source": "directory",
-        "path": "/Users/nathan/Developer/trip-insurance"
+        "source": "github",
+        "repo": "hab56ur9/trip-insurance"
       }
     }
   }

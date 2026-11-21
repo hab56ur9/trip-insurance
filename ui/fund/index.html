@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>테스트 ETH 분배 (발표자)</title>
+<link rel="stylesheet" href="../app.css?v=20261121r">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="../shared.js?v=20261121r"></script>
+</head>
+<body>
+<main class="desk">
+  <div class="top"><h1>테스트 ETH 분배</h1><span class="pill" id="network">—</span></div>
+  <div class="split">
+    <div class="panel">
+      <div class="hero">
+        <div class="label">보낼 참여자</div>
+        <div class="big" id="pending">—</div>
+        <div class="sub" id="need"></div>
+      </div>
+      <div class="card" style="background: var(--amber-soft); border-color: transparent;">
+        <div class="title" style="color: var(--amber);">시연 전용 지갑만 쓰세요</div>
+        <div class="meta" style="color: var(--text-2); margin-top: 4px;">이 화면은 키를 저장하지 않고, 닫으면 잊어요. 그래도 키는 브라우저 안의 코드가 다루므로, 분배할 만큼만 넣어 둔 새 지갑의 키를 넣으세요.</div>
+      </div>
+      <div class="field">
+        <label for="key">서명 키</label>
+        <input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="0x…">
+        <div class="hint" id="from"></div>
+      </div>
+      <div class="field">
+        <label for="amount">1인당 금액 (원)</label>
+        <input id="amount" inputmode="numeric" value="20,000">
+        <div class="hint" id="amountEth"></div>
+      </div>
+      <button class="btn" id="send" disabled>보내기</button>
+    </div>
+    <div class="section" style="margin-top: 18px;">
+      <h2>참여자 <small id="count"></small></h2>
+      <div id="list"><div class="empty">불러오는 중…</div></div>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(async () => {
+  const { config } = await loadNetwork();
+  const publicNetwork = await api(new URL("networks/base-sepolia.json", SITE).href, "");
+  const participantsUrl = QUERY.get("participants") || publicNetwork.config.participants;
+  provider = new ethers.JsonRpcProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`);
+  $("network").textContent = NETWORK === "local" ? "로컬 체인" : "Base Sepolia";
+
+  let wallet = null;
+  let rows = [];
+  let sending = false;
+  const amountWei = () => {
+    try { return krwToWei($("amount").value); } catch { return 0n; }
+  };
+  const short = (a) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+
+  function render() {
+    const amount = amountWei();
+    const waiting = rows.filter((r) => r.balance < amount);
+    const total = amount * BigInt(waiting.length);
+    $("pending").textContent = `${waiting.length}명`;
+    $("need").innerHTML = `필요한 금액 <b>${krw(total)}</b> <small class="muted">(${eth(total)})</small>`;
+    $("amountEth").textContent = ethHint($("amount").value);
+    $("count").textContent = `${rows.length}명`;
+    const state = (r) => (r.balance >= amount ? `<span class="chip good">받음</span>` : r.sending ? `<span class="chip info">보내는 중</span>` : `<span class="chip gray">대기</span>`);
+    $("list").innerHTML = rows.length
+      ? `<table class="table"><thead><tr><th>이름</th><th>지갑 주소</th><th class="num">잔액</th><th class="num">상태</th></tr></thead><tbody>${rows
+          .map((r) => `<tr><td><b>${esc(r.name)}</b></td><td class="mono">${r.address}</td><td class="num">${krw(r.balance)}<small>${eth(r.balance)}</small></td><td class="num">${state(r)}</td></tr>`)
+          .join("")}</tbody></table>`
+      : `<div class="empty">아직 참여자가 없어요.</div>`;
+    $("send").disabled = sending || !wallet || waiting.length === 0 || amount === 0n;
+    $("send").textContent = sending ? "보내는 중…" : `${waiting.length}명에게 보내기`;
+  }
+
+  async function refresh() {
+    const list = await api(participantsUrl, "");
+    const balances = await Promise.all(list.map((p) => provider.getBalance(p.address)));
+    rows = list.map((p, i) => ({ ...p, balance: balances[i], sending: rows.find((r) => r.address === p.address)?.sending }));
+    if (wallet) $("from").textContent = `보내는 지갑 ${short(wallet.address)} · 잔액 ${eth(await provider.getBalance(wallet.address))}`;
+    render();
+  }
+
+  $("key").oninput = () => {
+    try {
+      wallet = new ethers.Wallet($("key").value.trim(), provider);
+      $("from").textContent = `보내는 지갑 ${short(wallet.address)}`;
+    } catch {
+      wallet = null;
+      $("from").textContent = $("key").value ? "키 형식이 아니에요" : "";
+    }
+    refresh().catch((e) => toast(e.message, true));
+  };
+  $("amount").oninput = render;
+
+  $("send").onclick = async () => {
+    const amount = amountWei();
+    const targets = rows.filter((r) => r.balance < amount);
+    sending = true;
+    targets.forEach((r) => (r.sending = true));
+    render();
+    try {
+      let nonce = await provider.getTransactionCount(wallet.address, "pending");
+      const sent = [];
+      for (const r of targets) sent.push(await wallet.sendTransaction({ to: r.address, value: amount - r.balance, nonce: nonce++ }));
+      toast(`${sent.length}건 보냈어요. 블록을 기다리는 중…`);
+      await Promise.all(sent.map((tx) => tx.wait()));
+      toast(`${sent.length}명에게 보냈어요`);
+    } catch (e) {
+      toast(e.shortMessage || e.message, true);
+    } finally {
+      sending = false;
+      rows.forEach((r) => (r.sending = false));
+      await refresh();
+    }
+  };
+
+  await refresh();
+  setInterval(() => !document.hidden && !sending && refresh().catch(() => {}), 5000);
+})().catch((e) => toast(e.message || String(e), true));
+</script>
+</body>
+</html>

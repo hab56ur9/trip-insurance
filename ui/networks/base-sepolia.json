@@ -1,0 +1,14 @@
+{
+  "config": {
+    "chainId": 84532,
+    "local": false,
+    "rpc": "https://sepolia.base.org",
+    "insurance": "",
+    "nft": "",
+    "oracle": "",
+    "minGap": 0,
+    "judgePeriod": 0,
+    "participants": "https://script.google.com/macros/s/AKfycbzDGWFWtkilbEtKUYgdI6CcTE_82jQn1wRP9B3P1weii8sSGoE9uth8L9AuCFQSyzpC9Q/exec"
+  },
+  "cases": []
+}

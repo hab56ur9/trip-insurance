@@ -43,6 +43,9 @@ const TEST_KEYS = {
 
 const QUERY = new URLSearchParams(location.search);
 const HOST = location.hostname || "127.0.0.1";
+const SITE = new URL(".", document.currentScript.src);
+const LOCAL_HOST = /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(HOST);
+const NETWORK = QUERY.get("network") || (LOCAL_HOST ? "local" : "base-sepolia");
 const PLATFORM = QUERY.get("platform") || `http://${HOST}:8787`;
 const ORACLE_API = QUERY.get("oracle") || "http://127.0.0.1:8788";
 const ETH_KRW = Number(QUERY.get("krw")) > 0 ? Number(QUERY.get("krw")) : 3258000;
@@ -99,6 +102,20 @@ function reason(e, iface) {
   return named ? ERRORS[named] : text;
 }
 
+function stored(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function store(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
 function tempKey() {
   try {
     let key = localStorage.getItem("trip.tempKey");
@@ -109,10 +126,16 @@ function tempKey() {
   }
 }
 
+async function loadNetwork() {
+  if (NETWORK === "local") return { config: await api(PLATFORM, "/config"), cases: await api(PLATFORM, "/cases") };
+  const network = await api(new URL(`networks/${NETWORK}.json`, SITE).href, "");
+  if (!network.config.insurance) throw new Error("아직 공개 체인에 배포되지 않았어요");
+  return network;
+}
+
 async function setup({ defaultRole } = {}) {
   const select = $("walletMode");
-  const config = await api(PLATFORM, "/config");
-  const cases = await api(PLATFORM, "/cases");
+  const { config, cases } = await loadNetwork();
   provider = new ethers.JsonRpcProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`);
   const ctx = { config, cases, provider };
   ctx.read = new ethers.Contract(config.insurance, INSURANCE_ABI, provider);
@@ -127,10 +150,13 @@ async function setup({ defaultRole } = {}) {
   };
   if (select) {
     if (!config.local) [...select.options].filter((o) => o.value !== "temp").forEach((o) => o.remove());
-    const saved = QUERY.get("wallet") || (config.local && (HOST === "localhost" || HOST === "127.0.0.1") ? String(defaultRole) : "temp");
-    if ([...select.options].some((o) => o.value === saved)) select.value = saved;
+    const fallback = config.local && (HOST === "localhost" || HOST === "127.0.0.1") ? String(defaultRole) : "temp";
+    const offered = (value) => [...select.options].some((o) => o.value === value);
+    select.value = [QUERY.get("wallet"), stored("trip.wallet"), fallback].find(offered) || select.value;
+    if (QUERY.get("wallet")) store("trip.wallet", select.value);
     ctx.connect();
     select.addEventListener("change", () => {
+      store("trip.wallet", select.value);
       ctx.connect();
       ctx.refresh?.();
     });
@@ -164,6 +190,7 @@ async function setup({ defaultRole } = {}) {
   };
 
   ctx.gasBanner = async () => {
+    if (NETWORK !== "local" || config.participants) return;
     const low = (await provider.getBalance(ctx.address)) < ethers.parseEther("0.01");
     $("gas").hidden = !low;
   };

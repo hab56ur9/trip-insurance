@@ -135,3 +135,17 @@ button, input, select { font: inherit; }
 .chip.risk-low { color: var(--green); background: var(--green-soft); }
 .chip.risk-mid { color: var(--amber); background: var(--amber-soft); }
 .chip.risk-high { color: var(--red); background: var(--red-soft); }
+main.desk { max-width: 1120px; padding: 0 32px 48px; }
+.desk .top { padding: 20px 0 10px; }
+.desk .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.desk .grid .card { margin: 0; }
+.desk .split { display: grid; grid-template-columns: 360px 1fr; gap: 40px; align-items: start; }
+.desk .panel { position: sticky; top: 72px; }
+.desk .panel .btn { width: 100%; margin-top: 8px; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { text-align: left; color: var(--text-3); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.table td { padding: 12px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: middle; }
+.table .num { text-align: right; }
+.table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: var(--text-2); }
+.table td small { display: block; color: var(--text-3); font-size: 12px; }
+@media (max-width: 800px) { .desk .split { grid-template-columns: 1fr; } .desk .panel { position: static; } }

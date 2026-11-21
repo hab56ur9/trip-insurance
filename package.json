@@ -4,7 +4,9 @@
   "version": "0.2.0",
   "scripts": {
     "services": "node services/run.js",
-    "e2e": "node e2e/run.js"
+    "e2e": "node e2e/run.js",
+    "deploy:base-sepolia": "RPC=${RPC:-https://sepolia.base.org} bash script/deploy-remote.sh && node script/export-network.js base-sepolia",
+    "export:network": "node script/export-network.js"
   },
   "dependencies": {
     "ethers": "^6.13.4"

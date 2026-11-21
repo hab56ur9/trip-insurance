@@ -7,3 +7,4 @@ deployments/*.json
 
 .claude/*
 !.claude/settings.json
+.context/

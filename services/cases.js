@@ -1,3 +1,5 @@
+const { id } = require("ethers");
+
 const CASES = [
   {
     key: "ktx",
@@ -44,5 +46,7 @@ const CASES = [
 ];
 
 const caseOf = (key) => CASES.find((c) => c.key === key);
+const subjectOf = (item) => id(`${item.key}:${item.subject}`);
+const catalog = () => CASES.map((item) => ({ ...item, subjectId: subjectOf(item), kindId: id(item.kind) }));
 
-module.exports = { CASES, caseOf };
+module.exports = { CASES, caseOf, subjectOf, catalog };

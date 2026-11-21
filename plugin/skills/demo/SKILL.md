@@ -12,9 +12,9 @@ description: 기말 발표 시연을 준비하고 진행한다 — 구매자 · 
 폰 참여가 있으면 노트북의 LAN 주소로 연다. 화면은 자기 호스트 이름으로 RPC · 플랫폼 주소를 맞춘다. 오라클 API는 노트북에서만 열린다.
 
 ```text
-구매자   http://<LAN IP>:8099/ui/buyer.html?wallet=temp
-투자자   http://<LAN IP>:8099/ui/investor.html?wallet=temp
-발표자   http://127.0.0.1:8099/ui/oracle.html
+투자자   http://<LAN IP>:8099/ui/?wallet=temp
+구매자   http://<LAN IP>:8099/ui/buy/?wallet=temp
+발표자   http://127.0.0.1:8099/ui/oracle/
 ```
 
 ```bash

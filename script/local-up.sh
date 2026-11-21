@@ -28,6 +28,6 @@ fi
 PROFILE=local TREASURY=$TREASURY ISSUER=$ISSUER forge script script/Deploy.s.sol \
   --rpc-url "$RPC" --private-key $DEPLOYER_KEY --broadcast --silent
 echo "deployed: $(cat deployments/31337.json)"
-echo "screens:  python3 -m http.server 8099 --bind $HOST  →  http://127.0.0.1:8099/ui/buyer.html · investor.html · oracle.html"
+echo "screens:  python3 -m http.server 8099 --bind $HOST  →  http://127.0.0.1:8099/ui/ (투자) · ui/buy/ (구매) · ui/oracle/ (발표자)"
 
 SERVICE_HOST="$HOST" BLOCK_TIME="$BLOCK_TIME" node services/run.js
