@@ -12,6 +12,11 @@ The demo site holds the slide deck and the demo screens on the Base Sepolia test
 
 **[hab56ur9.github.io/trip-insurance](https://hab56ur9.github.io/trip-insurance/)**
 
+The design documents are published next to the demo.
+
+- [PRD](https://hab56ur9.github.io/trip-insurance/docs/prd.html): requirements for joining, the auction, judging and settlement
+- [Tech doc](https://hab56ur9.github.io/trip-insurance/docs/tech.html): architecture, methods, limits and trade-offs
+
 ## Agent Plugin
 
 This repository supports an agent plugin for Claude Code and Codex. The plugin runs the demo and supports development.
