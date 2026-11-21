@@ -33,7 +33,7 @@ function createOracle({ chain, log = () => {}, blockTime = 12 }) {
     const status = STATUS[Number(await insurance.statusOf(policyId))];
     if (FINAL.includes(status)) return reports.delete(policyId);
     const policy = await insurance.policyOf(policyId);
-    if (now < Number(policy.windowEnd) || now + blockTime >= Number(policy.judgingEnd)) return;
+    if (status !== "Bound" || now + blockTime >= Number(policy.judgingEnd)) return;
     const signature = await signObservation(signer, insurance, policyId, value);
     await (await insurance.settle(policyId, value, signature)).wait();
     reports.delete(policyId);

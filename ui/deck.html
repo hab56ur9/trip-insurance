@@ -542,7 +542,7 @@
         for (const [id, { value }] of Object.entries(queue)) {
           const [policy, status] = await Promise.all([ctx.read.policyOf(id), ctx.read.statusOf(id)]);
           if (Number(status) !== 1 && Number(status) !== 2) { drop(id); continue; }
-          if (time < Number(policy.windowEnd) || time + BLOCK_TIME >= Number(policy.judgingEnd)) continue;
+          if (Number(status) !== 2 || time + BLOCK_TIME >= Number(policy.judgingEnd)) continue;
           const signature = await signer.signMessage(ethers.getBytes(await insurance.observationHash(id, value)));
           await (await insurance.settle(id, value, signature)).wait();
           drop(id);
@@ -589,12 +589,12 @@
       const targets = mine.filter((p) => p.status === 1 || p.status === 2);
       const done = mine.filter((p) => p.status === 4 || p.status === 5);
       const queued = [...new Set(targets.filter((p) => queue[p.id]).map((p) => queue[p.id].mark))];
-      const opens = targets.map((p) => Number(p.policy.windowEnd)).filter((ts) => ts > now);
+      const waiting = targets.some((p) => p.status === 1);
       return h("div", { key: event.key, style: boardCss.card },
         h("div", { style: boardCss.row }, h("strong", null, event.title), queued.length > 0 && h(Badge, { tone: "main" }, `${queued.join("/")} 판정 대기`)),
         h("span", { style: css.muted }, `${item.title} · ${conditionText(item)}`),
         h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정할 보험"), h("span", null, targets.length ? targets.map((p) => `#${p.id} ${STATUS[p.status]}`).join(", ") : "없음")),
-        opens.length > 0 && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 시작"), h("span", null, `${when(Math.min(...opens))} · ${left(Math.min(...opens), now)}`)),
+        waiting && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 시작"), h("span", null, "체결되면 바로")),
         done.length > 0 && h("div", { style: boardCss.kv }, h("span", { style: css.muted }, "판정 끝"), h("span", null, done.map((p) => `#${p.id} ${STATUS[p.status]}`).join(", "))),
         h("div", { style: boardCss.vote },
           h(Button, { variant: "primary", disabled: !signer || !targets.length, onClick: () => send(event, targets, true) }, h("span", { style: boardCss.mark }, "O")),

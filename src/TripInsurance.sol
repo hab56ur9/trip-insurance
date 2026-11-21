@@ -191,7 +191,7 @@ contract TripInsurance {
         Policy storage policy = policies[policyId];
         advance(policyId, policy);
         if (policy.status != Status.Bound) revert WrongStatus();
-        if (block.timestamp < policy.windowEnd || block.timestamp >= policy.judgingEnd) revert JudgingClosed();
+        if (block.timestamp >= policy.judgingEnd) revert JudgingClosed();
         if (recover(observationHash(policyId, value), signature) != policy.condition.oracle) revert WrongOracle();
 
         uint256 fee = policy.usedPremium * FEE_BPS / 10_000;

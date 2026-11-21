@@ -273,15 +273,22 @@ contract TripInsuranceTest is Test {
         insurance.settle(policyId, 1, abi.encodePacked(r, s, v));
     }
 
-    function test_J1_JudgesOnlyInsideTheWindow() public {
-        uint256 policyId = bound(100);
+    function test_J1_JudgesOnlyAfterBindingUntilTheWindowCloses() public {
+        uint256 policyId = request();
+        bid(alice, policyId, 100, 0.2 ether);
         bytes memory signature = signed(policyId, 1);
-        vm.warp(end - 1);
-        vm.expectRevert(TripInsurance.JudgingClosed.selector);
+        vm.expectRevert(TripInsurance.WrongStatus.selector);
         insurance.settle(policyId, 1, signature);
         vm.warp(end + JUDGE_PERIOD);
         vm.expectRevert(TripInsurance.WrongStatus.selector);
         insurance.settle(policyId, 1, signature);
+    }
+
+    function test_J4_JudgesAsSoonAsTheObservationArrives() public {
+        uint256 policyId = bound(100);
+        assertLt(block.timestamp, end);
+        insurance.settle(policyId, 0, signed(policyId, 0));
+        assertEq(uint8(insurance.policyOf(policyId).status), uint8(Status.Expired));
     }
 
     function test_J2_ConditionMetPays() public {
