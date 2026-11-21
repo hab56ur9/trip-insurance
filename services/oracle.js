@@ -54,6 +54,7 @@ function createOracle({ chain, log = () => {}, blockTime = 12 }) {
   }
 
   async function jump({ to }) {
+    if (!chain.local) throw new RequestError("시간 이동은 로컬 체인에서만 돼요");
     const target = Number(to);
     const now = await chain.now();
     if (!Number.isInteger(target) || target <= now) throw new RequestError("지금보다 뒤의 시각이어야 해요");

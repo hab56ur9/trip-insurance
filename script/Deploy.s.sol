@@ -8,9 +8,9 @@ import {TripInsurance} from "../src/TripInsurance.sol";
 contract Deploy is Script {
     function run() external returns (TripInsurance insurance, BookingNFT nft) {
         string memory profile = vm.envOr("PROFILE", string("local"));
-        bool local = keccak256(bytes(profile)) == keccak256("local");
-        uint64 minGap = local ? 60 : 1 hours;
-        uint64 judgePeriod = local ? 300 : 72 hours;
+        (uint64 defaultGap, uint64 defaultPeriod) = periods(profile);
+        uint64 minGap = uint64(vm.envOr("MIN_GAP", uint256(defaultGap)));
+        uint64 judgePeriod = uint64(vm.envOr("JUDGE_PERIOD", uint256(defaultPeriod)));
 
         vm.startBroadcast();
         nft = new BookingNFT(vm.envAddress("ISSUER"));
@@ -24,5 +24,12 @@ contract Deploy is Script {
         vm.serializeUint(json, "judgePeriod", judgePeriod);
         string memory out = vm.serializeString(json, "profile", profile);
         vm.writeJson(out, string.concat("deployments/", vm.toString(block.chainid), ".json"));
+    }
+
+    function periods(string memory profile) internal pure returns (uint64 minGap, uint64 judgePeriod) {
+        bytes32 name = keccak256(bytes(profile));
+        if (name == keccak256("local")) return (60, 300);
+        if (name == keccak256("demo")) return (5 minutes, 30 minutes);
+        return (1 hours, 72 hours);
     }
 }

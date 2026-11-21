@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보험 투자</title>
-<link rel="stylesheet" href="app.css?v=20261121">
+<link rel="stylesheet" href="app.css?v=20261121b">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="shared.js?v=20261121"></script>
+<script src="shared.js?v=20261121b"></script>
 </head>
 <body>
 <main>
@@ -69,6 +69,15 @@
     </div>`;
   }
 
+  function summary(status, won, deposit) {
+    if (status === 1) return "마감 뒤 배정돼요";
+    if (status === 3) return "유찰돼 예치금을 돌려받아요";
+    if (status === 4) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}는 보장금으로 지급, 보험료 몫을 받아요`;
+    if (status === 5) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}와 보험료 몫을 받아요`;
+    if (status === 6) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}를 돌려받아요`;
+    return `낙찰 ${won}개 · 예치금 ${eth(deposit)}로 보장 중`;
+  }
+
   function myCard(p) {
     const filled = p.stored >= 2 ? p.bids.map((b) => Number(b.filled)) : p.status === 1 ? p.bids.map(() => 0) : allocation(p.bids);
     const mine = p.bids.map((b, i) => ({ b, filled: filled[i] })).filter(({ b }) => b.bidder === ctx.address);
@@ -80,7 +89,7 @@
     const action = refundable || payable ? `<button class="btn sm" data-claim="${p.id}">청구하기</button>` : "";
     return `<div class="card"><div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span>${statusChip(p.status)}</div>
       ${lines}
-      <div class="row"><span class="meta">${p.status === 1 ? "마감 뒤 배정돼요" : `낙찰 지분 ${won}개 · 예치금 ${eth(deposit)}`}</span>${action}</div></div>`;
+      <div class="row"><span class="meta">${summary(p.status, won, deposit)}</span>${action}</div></div>`;
   }
 
   ctx.refresh = async () => {

@@ -43,12 +43,11 @@ const TEST_KEYS = {
 
 const QUERY = new URLSearchParams(location.search);
 const HOST = location.hostname || "127.0.0.1";
-const RPC = QUERY.get("rpc") || `http://${HOST}:8545`;
 const PLATFORM = QUERY.get("platform") || `http://${HOST}:8787`;
 const ORACLE_API = QUERY.get("oracle") || "http://127.0.0.1:8788";
 const ETH_KRW = Number(QUERY.get("krw")) > 0 ? Number(QUERY.get("krw")) : 3258000;
 
-const provider = new ethers.JsonRpcProvider(RPC);
+let provider;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const eth = (wei) => `${Number(ethers.formatEther(wei)).toLocaleString("ko-KR", { maximumFractionDigits: 6 })} ETH`;
@@ -103,6 +102,7 @@ async function setup({ defaultRole } = {}) {
   const select = $("walletMode");
   const config = await api(PLATFORM, "/config");
   const cases = await api(PLATFORM, "/cases");
+  provider = new ethers.JsonRpcProvider(QUERY.get("rpc") || config.rpc || `http://${HOST}:8545`);
   const ctx = { config, cases, provider };
   ctx.read = new ethers.Contract(config.insurance, INSURANCE_ABI, provider);
   ctx.nft = new ethers.Contract(config.nft, NFT_ABI, provider);
@@ -115,7 +115,8 @@ async function setup({ defaultRole } = {}) {
     $("dot").className = "dot on";
   };
   if (select) {
-    const saved = QUERY.get("wallet") || (HOST === "localhost" || HOST === "127.0.0.1" ? String(defaultRole) : "temp");
+    if (!config.local) [...select.options].filter((o) => o.value !== "temp").forEach((o) => o.remove());
+    const saved = QUERY.get("wallet") || (config.local && (HOST === "localhost" || HOST === "127.0.0.1") ? String(defaultRole) : "temp");
     if ([...select.options].some((o) => o.value === saved)) select.value = saved;
     ctx.connect();
     select.addEventListener("change", () => {

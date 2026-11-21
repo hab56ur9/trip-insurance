@@ -10,7 +10,7 @@ const subjectOf = (item) => id(`${item.key}:${item.subject}`);
 
 function createPlatform({ chain, log = () => {} }) {
   const issuer = new NonceManager(chain.wallets.issuer);
-  const faucetWallet = new NonceManager(chain.wallets.deployer);
+  const faucetWallet = new NonceManager(chain.wallets.faucet);
   const nft = chain.nft(issuer);
   const granted = new Set();
 
@@ -52,7 +52,7 @@ function createPlatform({ chain, log = () => {} }) {
 
   const routes = {
     "GET /cases": cases,
-    "GET /config": () => ({ ...chain.addresses, oracle: chain.wallets.oracle.address }),
+    "GET /config": () => ({ ...chain.addresses, chainId: chain.chainId, local: chain.local, rpc: chain.publicRpc, oracle: chain.wallets.oracle.address }),
     "POST /bookings": book,
     "POST /faucet": faucet,
   };

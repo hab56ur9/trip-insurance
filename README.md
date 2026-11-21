@@ -52,3 +52,19 @@ POST :8788/time         { to } → 로컬 체인 시각 이동
 ```
 
 오라클 API(8788)는 같은 호스트의 요청만 받는다.
+
+## 테스트넷 배포 (예정)
+
+Sepolia 같은 공개 테스트넷에는 아직 배포하지 않았다. 배포 구조는 준비되어 있다. 로컬 체인이 아니면 서비스는 테스트 키를 쓰지 않고 환경 변수의 키를 쓴다. 시간 이동은 막히고, 화면은 임시 지갑만 보여 준다.
+
+```bash
+RPC=<Sepolia RPC> DEPLOYER_KEY=… ISSUER_KEY=… TREASURY=0x… PROFILE=demo ./script/deploy-remote.sh
+RPC=<Sepolia RPC> PUBLIC_RPC=<브라우저용 RPC> ISSUER_KEY=… ORACLE_KEY=… FAUCET_KEY=… BLOCK_TIME=12 npm run services
+```
+
+```text
+PROFILE        local 60초 · 5분, demo 5분 · 30분, live 1시간 · 72시간 (모집 마감 간격 · 판정 기간)
+MIN_GAP · JUDGE_PERIOD   위 값을 초 단위로 덮어쓴다
+BOOKING_START_AFTER · BOOKING_DURATION   Mock 예약의 시작 지연 · 길이 (초)
+FAUCET_KEY     테스트 ETH를 나눠 줄 지갑, 발표 전에 수도꼭지로 채워 둔다
+```

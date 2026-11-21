@@ -39,18 +39,38 @@ function deployment(chainId) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, "deployments", `${chainId}.json`), "utf8"));
 }
 
+const LOCAL_CHAIN_ID = 31337;
+const SERVICE_KEYS = { issuer: "ISSUER_KEY", oracle: "ORACLE_KEY", faucet: "FAUCET_KEY" };
+const LOCAL_SERVICE_ROLES = { issuer: "issuer", oracle: "oracle", faucet: "deployer" };
+
+function serviceWallets(provider, local) {
+  return Object.fromEntries(
+    Object.entries(SERVICE_KEYS).map(([role, env]) => {
+      const key = process.env[env] || (local ? ANVIL_KEYS[ROLES[LOCAL_SERVICE_ROLES[role]]] : null);
+      if (!key) throw new Error(`${env} is required outside the local chain`);
+      return [role, new Wallet(key, provider)];
+    })
+  );
+}
+
 async function connect(rpc = process.env.RPC || "http://127.0.0.1:8545") {
   const provider = new JsonRpcProvider(rpc, undefined, { polling: true, pollingInterval: 250 });
   const network = await provider.getNetwork();
-  const addresses = deployment(network.chainId);
-  const wallets = Object.fromEntries(
-    Object.entries(ROLES).map(([role, index]) => [role, new Wallet(ANVIL_KEYS[index], provider)])
-  );
+  const chainId = Number(network.chainId);
+  const local = chainId === LOCAL_CHAIN_ID;
+  const addresses = deployment(chainId);
+  const wallets = local
+    ? Object.fromEntries(Object.entries(ROLES).map(([role, index]) => [role, new Wallet(ANVIL_KEYS[index], provider)]))
+    : {};
+  Object.assign(wallets, serviceWallets(provider, local));
   const insurance = (signer) => new Contract(addresses.insurance, abi("TripInsurance"), signer || provider);
   const nft = (signer) => new Contract(addresses.nft, abi("BookingNFT"), signer || provider);
 
   return {
     provider,
+    chainId,
+    local,
+    publicRpc: process.env.PUBLIC_RPC || "",
     addresses,
     wallets,
     insurance,
