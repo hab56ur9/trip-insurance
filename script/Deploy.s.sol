@@ -29,7 +29,7 @@ contract Deploy is Script {
     function periods(string memory profile) internal pure returns (uint64 minGap, uint64 judgePeriod) {
         bytes32 name = keccak256(bytes(profile));
         if (name == keccak256("local")) return (60, 300);
-        if (name == keccak256("demo")) return (5 minutes, 30 minutes);
+        if (name == keccak256("demo")) return (1 minutes, 30 minutes);
         return (1 hours, 72 hours);
     }
 }
