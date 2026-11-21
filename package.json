@@ -1,7 +1,7 @@
 {
   "name": "trip-insurance",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "scripts": {
     "services": "node services/run.js",
     "e2e": "node e2e/run.js",

@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.5.0...trip-insurance-v0.5.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ui:** mint demo bookings from the presenter wallet on public networks ([11a1d00](https://github.com/hab56ur9/trip-insurance/commit/11a1d0091bd77dff3587cf42cc6010d9674d8645))
+* **ui:** show booking import progress and start demo bookings in 15 minutes ([0224cfe](https://github.com/hab56ur9/trip-insurance/commit/0224cfee2a7817c7f0c38d5c8ebb2c26e18b469f))
+* **ui:** survive the public RPC rate limit ([a0c5b0d](https://github.com/hab56ur9/trip-insurance/commit/a0c5b0d6fb61e85308d2dea44365e79a24938517))
+
 ## [0.5.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.4.0...trip-insurance-v0.5.0) (2026-11-21)
 
 
