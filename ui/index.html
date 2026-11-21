@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보험 투자</title>
-<link rel="stylesheet" href="app.css?v=20261121w">
+<link rel="stylesheet" href="app.css?v=20261121x">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="shared.js?v=20261121w"></script>
+<script src="shared.js?v=20261121x"></script>
 </head>
 <body>
 <main>
@@ -25,9 +25,10 @@
   <nav class="nav" id="nav"><a href="buy/">보험</a><a class="on" href="./">투자</a></nav>
 
   <section data-view="home">
-    <div class="hero" id="hero" hidden>
-      <div class="label">받을 수 있는 금액</div>
-      <div class="big" id="credits">—</div>
+    <div class="hero" id="hero">
+      <div class="label">내 지갑</div>
+      <div class="big" id="balance">—</div>
+      <div class="sub" id="creditLine" hidden></div>
     </div>
     <div class="card" id="wait" hidden><div class="title">시연자가 ETH를 보내 주길 기다리는 중이에요</div><div class="meta">받으면 입찰할 수 있어요. 테스트넷 ETH라 실제 돈은 아니에요.</div></div>
     <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">테스트 ETH를 한 번 받을 수 있어요.</div></span><button class="btn sm" id="gasBtn">받기</button></div></div>
@@ -181,13 +182,14 @@
 
   ctx.refresh = async () => {
     const now = await ctx.now();
-    const [credits, all] = await Promise.all([ctx.read.credits(ctx.address), ctx.policies()]);
+    const [credits, balance, all] = await Promise.all([ctx.read.credits(ctx.address), ctx.provider.getBalance(ctx.address), ctx.policies()]);
     policies = all;
     await ctx.gasBanner();
-    $("wait").hidden = !participants || (await ctx.provider.getBalance(ctx.address)) > 0n;
-    $("hero").hidden = credits === 0n;
+    $("wait").hidden = !participants || balance > 0n;
+    $("balance").innerHTML = money(balance);
+    $("creditLine").hidden = credits === 0n;
+    $("creditLine").innerHTML = `출금할 수 있는 금액 <b>${krw(credits)}</b>`;
     $("homeCta").hidden = credits === 0n;
-    $("credits").innerHTML = money(credits);
 
     const open = all.filter((p) => p.status === 1 && p.policy.insured !== ctx.address).reverse();
     $("open").innerHTML = open.length ? open.map((p) => openCard(p, now)).join("") : `<div class="empty">지금 입찰할 수 있는 보험이 없어요.</div>`;
