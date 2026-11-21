@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="../app.css?v=20261122c">
+<link rel="stylesheet" href="../app.css?v=20261122d">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="../shared.js?v=20261122c"></script>
+<script src="../shared.js?v=20261122d"></script>
 </head>
 <body>
 <main>
@@ -152,7 +152,7 @@
     }
     const lines = {
       1: `보장금액 최소 ${krw(policy.policy.minCoverage)} · 투자자 모집 ${left(policy.policy.biddingEnd, now)}`,
-      2: `보장금액 ${krw(outcome(policy).coverage)} · 여행이 끝나면 판정해요`,
+      2: `보장금액 ${krw(outcome(policy).coverage)} · 오라클 판정이 오면 바로 결과가 나와요`,
       3: "투자자가 없어 보험료를 돌려받아요",
       4: `일정이 틀어져 보장금 ${krw(policy.policy.coverage)}을 받았어요`,
       5: "일정이 무사히 끝났어요",
