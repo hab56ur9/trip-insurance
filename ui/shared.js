@@ -256,7 +256,7 @@ async function setup() {
     const now = await ctx.now();
     const [mine, policies] = await Promise.all([ctx.bookingsOf(ctx.address), ctx.policies()]);
     const insured = new Set(policies.filter((p) => p.policy.insured === ctx.address).map((p) => Number(p.policy.tokenId)));
-    const open = new Set(mine.filter((b) => !insured.has(b.tokenId) && Number(b.booking.start) - now > config.minGap + 60).map((b) => b.booking.subject));
+    const open = new Set(mine.filter((b) => !insured.has(b.tokenId) && Number(b.booking.start) - now > BOOKING_START_AFTER / 2).map((b) => b.booking.subject));
     const nft = new ethers.Contract(config.nft, NFT_ABI, ctx.wallet);
     const missing = cases.filter((item) => !open.has(item.subjectId));
     for (const [i, item] of missing.entries()) {
