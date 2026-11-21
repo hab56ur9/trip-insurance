@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.1](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.8.0...trip-insurance-v0.8.1) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deck:** show the embedded screens before the presenter key is set ([5c53124](https://github.com/hab56ur9/trip-insurance/commit/5c531247090dd3af7dc99261b47c19d914f08ae3))
+* **deck:** show the embedded screens before the presenter key is set ([90376fc](https://github.com/hab56ur9/trip-insurance/commit/90376fcc97a01c12626de64111b8cb3d484c0f61))
+
 ## [0.8.0](https://github.com/hab56ur9/trip-insurance/compare/trip-insurance-v0.7.0...trip-insurance-v0.8.0) (2026-11-21)
 
 
