@@ -9,7 +9,8 @@ const CASES = [
     label: "도착 지연",
     unit: "분",
     threshold: 30,
-    premiumEth: "0.003",
+    riskPct: 2,
+    premiumEth: "0.0018",
     minCoverageEth: "0.06",
   },
   {
@@ -22,7 +23,8 @@ const CASES = [
     label: "일 강수량",
     unit: "mm",
     threshold: 50,
-    premiumEth: "0.006",
+    riskPct: 4,
+    premiumEth: "0.0072",
     minCoverageEth: "0.12",
   },
   {
@@ -35,7 +37,8 @@ const CASES = [
     label: "최대 풍속",
     unit: "m/s",
     threshold: 14,
-    premiumEth: "0.0025",
+    riskPct: 6,
+    premiumEth: "0.0045",
     minCoverageEth: "0.05",
   },
 ];

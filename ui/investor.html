@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>보험 투자</title>
-<link rel="stylesheet" href="app.css?v=20261121b">
+<link rel="stylesheet" href="app.css?v=20261121k">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="shared.js?v=20261121b"></script>
+<script src="shared.js?v=20261121k"></script>
 </head>
 <body>
 <main>
   <div class="top">
-    <h1>보험 투자</h1>
+    <div class="row" style="gap: 4px;"><button class="back" id="back" hidden aria-label="뒤로">‹</button><h1 id="heading">보험 투자</h1></div>
     <span class="pill"><span class="dot" id="dot"></span>
       <select id="walletMode" aria-label="지갑">
         <option value="5">투자자 alice #5</option>
@@ -21,61 +21,84 @@
       </select>
     </span>
   </div>
-  <nav class="nav"><a href="buyer.html">보험</a><a class="on" href="investor.html">투자</a></nav>
+  <nav class="nav" id="nav"><a href="buyer.html">보험</a><a class="on" href="investor.html">투자</a></nav>
 
-  <div class="hero">
-    <div class="label">출금할 수 있는 금액</div>
-    <div class="big" id="credits">—</div>
-    <div class="sub" id="heroSub">지갑을 연결하는 중…</div>
-  </div>
-  <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">입찰과 가스비에 쓸 테스트 ETH가 필요해요.</div></span><button class="btn sm" id="gasBtn">테스트 ETH 받기</button></div></div>
+  <section data-view="home">
+    <div class="hero" id="hero" hidden>
+      <div class="label">받을 수 있는 금액</div>
+      <div class="big" id="credits">—</div>
+    </div>
+    <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">테스트 ETH를 한 번 받을 수 있어요.</div></span><button class="btn sm" id="gasBtn">받기</button></div></div>
+    <div class="section">
+      <h2>입찰할 수 있는 보험</h2>
+      <div id="open"><div class="empty">불러오는 중…</div></div>
+    </div>
+    <div class="section">
+      <h2>내 투자</h2>
+      <div id="mine"><div class="empty">불러오는 중…</div></div>
+    </div>
+    <div class="cta" id="homeCta" hidden><div class="inner"><button class="btn" id="withdrawBtn">출금하기</button></div></div>
+  </section>
 
-  <div class="section">
-    <h2>입찰 중인 보험 <small>지분 100개 · 높은 금액부터 배정</small></h2>
-    <div id="open"><div class="empty">불러오는 중…</div></div>
-  </div>
-  <div class="section">
-    <h2>내 투자 <small id="count"></small></h2>
-    <div id="mine"><div class="empty">불러오는 중…</div></div>
-  </div>
-
-  <div class="cta"><div class="inner"><button class="btn" id="withdrawBtn" disabled>출금하기</button></div></div>
+  <section data-view="bid" hidden>
+    <div class="hero">
+      <div class="label" id="bidTitle"></div>
+      <div class="row" style="align-items: flex-end;"><div class="big up" id="rate"></div><div id="riskBox"></div></div>
+      <div class="sub" id="summary" style="font-size: 15px; color: var(--text-2);"></div>
+      <div class="sub" id="bidNote" style="margin-top: 6px;"></div>
+    </div>
+    <div class="order">
+      <div class="order-row">
+        <span class="k">지분당 보장금액<small id="priceEth"></small></span>
+        <span class="stepper"><button type="button" data-step="price:-10" aria-label="10원 내리기">−</button><input id="price" inputmode="numeric" aria-label="지분당 보장금액"><span class="unit">원</span><button type="button" data-step="price:10" aria-label="10원 올리기">+</button></span>
+      </div>
+      <div class="order-row">
+        <span class="k">지분 수<small>최대 100개</small></span>
+        <span class="stepper"><button type="button" data-step="units:-1" aria-label="1개 빼기">−</button><input id="units" inputmode="numeric" aria-label="지분 수"><span class="unit">개</span><button type="button" data-step="units:1" aria-label="1개 더하기">+</button></span>
+      </div>
+      <div class="quick"><button type="button" data-units-set="10">10개</button><button type="button" data-units-set="50">50개</button><button type="button" data-units-set="100">최대</button></div>
+    </div>
+    <div class="cta"><div class="inner"><button class="btn" id="doBid">입찰하기</button></div></div>
+  </section>
 </main>
 <div class="toast" id="toast"></div>
 
 <script>
 (async () => {
   const ctx = await setup({ defaultRole: 5 });
-  const drafts = {};
+  const show = createViews({ home: "보험 투자", bid: "입찰하기" });
+  let bidding = null;
+  let policies = [];
+
+  const startOf = (p) => p.policy.minCoverage / 100n;
+  const riskLevel = (pct) => (pct <= 2 ? ["low", "낮음"] : pct <= 4 ? ["mid", "보통"] : ["high", "높음"]);
+  const riskChip = (item) => {
+    if (!item) return "";
+    const [level, word] = riskLevel(item.riskPct);
+    return `<span class="chip risk-${level}">위험도 ${word} ${item.riskPct}%</span>`;
+  };
+  const riskBlock = (item) => {
+    if (!item) return "";
+    const [level, word] = riskLevel(item.riskPct);
+    return `<div class="risk ${level}"><span class="k">위험도 ${word}</span><span class="v">${item.riskPct}%</span><small>틀어질 확률 (가정)</small></div>`;
+  };
+  const rateOf = (premium, unitCoverage) => (Number(premium) * 0.98 / (100 * Number(unitCoverage)) * 100).toFixed(2);
+  const topOf = (p) => p.bids.reduce((a, b) => (b.unitCoverage > a ? b.unitCoverage : a), 0n);
 
   function openCard(p, now) {
-    const start = p.policy.minCoverage / 100n;
-    const units = p.bids.reduce((a, b) => a + Number(b.units), 0);
-    const top = p.bids.reduce((a, b) => (b.unitCoverage > a ? b.unitCoverage : a), 0n);
-    const draft = drafts[p.id] || { units: "10", price: ethers.formatEther(top > start ? top : start) };
-    return `<div class="card">
-      <div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span><span class="chip info">${left(p.policy.biddingEnd, now)}</span></div>
-      <div class="meta">${conditionText(p.item)}</div>
-      <div class="kv"><span class="k">보험료 (무사하면 수익)</span><span class="v">${money(p.policy.premium)}</span></div>
-      <div class="kv"><span class="k">지분당 시작가</span><span class="v">${money(start)}</span></div>
-      <div class="kv"><span class="k">입찰 현황</span><span class="v">${p.bids.length}건 · 지분 ${units}개${top ? `<small>최고 지분당 ${eth(top)}</small>` : ""}</span></div>
-      <div class="row" style="margin-top: 10px; gap: 8px;">
-        <input class="field-in" data-units="${p.id}" value="${esc(draft.units)}" inputmode="numeric" aria-label="지분 수" style="width: 72px; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--soft);">
-        <span class="meta">개 ×</span>
-        <input class="field-in" data-price="${p.id}" value="${esc(draft.price)}" inputmode="decimal" aria-label="지분당 보장금액" style="flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--soft);">
-        <span class="meta">ETH</span>
-        <button class="btn sm" data-bid="${p.id}">입찰</button>
-      </div>
+    return `<div class="card tap" data-open="${p.id}">
+      <div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span><span class="row" style="gap: 6px;">${riskChip(p.item)}<span class="chip info">${left(p.policy.biddingEnd, now)}</span></span></div>
+      <div class="row"><span class="meta">보장금액 최소 ${krw(p.policy.minCoverage)} · 입찰 ${p.bids.length}건</span><span class="amount up">+${rateOf(p.policy.premium, startOf(p))}%</span></div>
     </div>`;
   }
 
   function summary(status, won, deposit) {
     if (status === 1) return "마감 뒤 배정돼요";
     if (status === 3) return "유찰돼 예치금을 돌려받아요";
-    if (status === 4) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}는 보장금으로 지급, 보험료 몫을 받아요`;
-    if (status === 5) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}와 보험료 몫을 받아요`;
-    if (status === 6) return `낙찰 ${won}개 · 예치금 ${eth(deposit)}를 돌려받아요`;
-    return `낙찰 ${won}개 · 예치금 ${eth(deposit)}로 보장 중`;
+    if (status === 4) return `낙찰 ${won}개 · 예치금 ${krw(deposit)}은 보장금으로 지급, 보험료 몫을 받아요`;
+    if (status === 5) return `낙찰 ${won}개 · 예치금 ${krw(deposit)}과 보험료 몫을 받아요`;
+    if (status === 6) return `낙찰 ${won}개 · 예치금 ${krw(deposit)}을 돌려받아요`;
+    return `낙찰 ${won}개 · 예치금 ${krw(deposit)}으로 보장 중`;
   }
 
   function myCard(p) {
@@ -85,47 +108,82 @@
     const deposit = mine.reduce((a, m) => a + BigInt(m.filled) * m.b.unitCoverage, 0n);
     const refundable = p.status !== 1 && mine.some(({ b, filled }) => !b.refunded && Number(b.units) > filled);
     const payable = [4, 5, 6].includes(p.status) && mine.some(({ b, filled }) => !b.claimed && filled > 0);
-    const lines = mine.map(({ b, filled }) => `<div class="meta">지분 ${b.units}개 × ${eth(b.unitCoverage)}${p.status === 1 ? "" : ` → 낙찰 ${filled}개`}</div>`).join("");
     const action = refundable || payable ? `<button class="btn sm" data-claim="${p.id}">청구하기</button>` : "";
     return `<div class="card"><div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span>${statusChip(p.status)}</div>
-      ${lines}
       <div class="row"><span class="meta">${summary(p.status, won, deposit)}</span>${action}</div></div>`;
   }
+
+  const digits = (v) => Number(String(v).replace(/[^0-9]/g, "")) || 0;
+  function updateDeposit() {
+    $("priceEth").textContent = ethHint($("price").value);
+    let total = 0n;
+    try { total = krwToWei($("price").value) * BigInt(Math.max(0, digits($("units").value))); } catch {}
+    const units = Math.min(100, Math.max(0, digits($("units").value)));
+    const share = bidding ? (bidding.policy.premium * 98n * BigInt(units)) / 10000n : 0n;
+    $("summary").innerHTML = `<b>${krw(total)}</b>을 맡기면 무사할 때 <b>+${krw(share)}</b> <small class="muted">(${eth(total)})</small>`;
+    let price = 0n;
+    try { price = krwToWei($("price").value); } catch {}
+    $("rate").textContent = bidding && price > 0n ? `+${rateOf(bidding.policy.premium, price)}%` : "—";
+  }
+  $("units").oninput = updateDeposit;
+  $("price").oninput = updateDeposit;
+  document.querySelectorAll("[data-step]").forEach((el) => (el.onclick = () => {
+    const [field, delta] = el.dataset.step.split(":");
+    const next = Math.max(field === "units" ? 1 : 0, digits($(field).value) + Number(delta));
+    $(field).value = field === "units" ? String(Math.min(100, next)) : won(next);
+    updateDeposit();
+  }));
+  document.querySelectorAll("[data-units-set]").forEach((el) => (el.onclick = () => {
+    $("units").value = el.dataset.unitsSet;
+    updateDeposit();
+  }));
+
+  async function openBid(id) {
+    const p = policies.find((x) => x.id === Number(id));
+    const now = await ctx.now();
+    bidding = p;
+    const start = startOf(p);
+    const top = topOf(p);
+    $("bidTitle").textContent = p.item?.title || `보험 #${p.id}`;
+    $("riskBox").innerHTML = riskBlock(p.item);
+    $("bidNote").textContent = `${conditionText(p.item).replace("이면 지급", "이면 맡긴 금액은 구매자에게 가요")} · ${left(p.policy.biddingEnd, now)}`;
+    $("units").value = "10";
+    $("price").value = won(weiToKrwCeil(top > start ? top : start));
+    updateDeposit();
+    show("bid");
+  }
+
+  $("doBid").onclick = async () => {
+    let price;
+    try { price = krwToWei($("price").value); } catch { return toast("지분당 보장금액을 확인해 주세요", true); }
+    const units = digits($("units").value);
+    $("doBid").disabled = true;
+    const ok = await ctx.send("입찰", () => ctx.write.placeBid(bidding.id, units, price, { value: price * BigInt(units) }));
+    $("doBid").disabled = false;
+    if (ok) { history.back(); ctx.refresh(); }
+  };
 
   ctx.refresh = async () => {
     const now = await ctx.now();
     const [credits, all] = await Promise.all([ctx.read.credits(ctx.address), ctx.policies()]);
-    $("credits").innerHTML = money(credits);
-    $("withdrawBtn").disabled = credits === 0n;
-    $("heroSub").innerHTML = `지갑 <b>${ctx.address.slice(0, 8)}…</b>`;
+    policies = all;
     await ctx.gasBanner();
+    $("hero").hidden = credits === 0n;
+    $("homeCta").hidden = credits === 0n;
+    $("credits").innerHTML = money(credits);
 
     const open = all.filter((p) => p.status === 1 && p.policy.insured !== ctx.address).reverse();
     $("open").innerHTML = open.length ? open.map((p) => openCard(p, now)).join("") : `<div class="empty">지금 입찰할 수 있는 보험이 없어요.</div>`;
     const mine = all.filter((p) => p.bids.some((b) => b.bidder === ctx.address)).reverse();
-    $("count").textContent = mine.length ? `${mine.length}건` : "";
     $("mine").innerHTML = mine.length ? mine.map(myCard).join("") : `<div class="empty">아직 입찰한 보험이 없어요.</div>`;
 
-    document.querySelectorAll("[data-units],[data-price]").forEach((el) => (el.oninput = () => {
-      const id = el.dataset.units || el.dataset.price;
-      drafts[id] = { units: document.querySelector(`[data-units="${id}"]`).value, price: document.querySelector(`[data-price="${id}"]`).value };
-    }));
-    document.querySelectorAll("[data-bid]").forEach((el) => (el.onclick = async () => {
-      const id = el.dataset.bid;
-      const units = Number(document.querySelector(`[data-units="${id}"]`).value);
-      let price;
-      try { price = ethers.parseEther(document.querySelector(`[data-price="${id}"]`).value); } catch { return toast("지분당 보장금액을 확인해 주세요", true); }
-      el.disabled = true;
-      const ok = await ctx.send("입찰", () => ctx.write.placeBid(id, units, price, { value: price * BigInt(units) }));
-      el.disabled = false;
-      if (ok) { delete drafts[id]; ctx.refresh(); }
-    }));
+    document.querySelectorAll("[data-open]").forEach((el) => (el.onclick = () => openBid(el.dataset.open)));
     document.querySelectorAll("[data-claim]").forEach((el) => (el.onclick = async () => (await ctx.send("청구", () => ctx.write.claim(el.dataset.claim))) && ctx.refresh()));
   };
 
   $("withdrawBtn").onclick = async () => (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
   await ctx.refresh();
-  setInterval(() => !document.hidden && !document.activeElement?.matches("input") && ctx.refresh().catch(() => {}), 4000);
+  setInterval(() => !document.hidden && ctx.refresh().catch(() => {}), 4000);
 })().catch((e) => toast(e.message || String(e), true));
 </script>
 </body>

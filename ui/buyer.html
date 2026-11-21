@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 여행 보험</title>
-<link rel="stylesheet" href="app.css?v=20261121b">
+<link rel="stylesheet" href="app.css?v=20261121m">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
-<script src="shared.js?v=20261121b"></script>
+<script src="shared.js?v=20261121m"></script>
 </head>
 <body>
 <main>
   <div class="top">
-    <h1>내 여행 보험</h1>
+    <div class="row" style="gap: 4px;"><button class="back" id="back" hidden aria-label="뒤로">‹</button><h1 id="heading">내 여행 보험</h1></div>
     <span class="pill"><span class="dot" id="dot"></span>
       <select id="walletMode" aria-label="지갑">
         <option value="4">구매자 #4</option>
@@ -19,76 +19,58 @@
       </select>
     </span>
   </div>
-  <nav class="nav"><a class="on" href="buyer.html">보험</a><a href="investor.html">투자</a></nav>
+  <nav class="nav" id="nav"><a class="on" href="buyer.html">보험</a><a href="investor.html">투자</a></nav>
 
-  <div class="hero">
-    <div class="label">출금할 수 있는 금액</div>
-    <div class="big" id="credits">—</div>
-    <div class="sub" id="heroSub">지갑을 연결하는 중…</div>
-  </div>
-  <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">트랜잭션을 보낼 테스트 ETH가 필요해요.</div></span><button class="btn sm" id="gasBtn">테스트 ETH 받기</button></div></div>
+  <section data-view="home">
+    <div class="hero" id="hero" hidden>
+      <div class="label">받을 수 있는 금액</div>
+      <div class="big" id="credits">—</div>
+    </div>
+    <div class="card" id="gas" hidden><div class="row"><span><span class="title">가스비가 부족해요</span><div class="meta">테스트 ETH를 한 번 받을 수 있어요.</div></span><button class="btn sm" id="gasBtn">받기</button></div></div>
+    <div class="section">
+      <h2>내 여행 <button class="btn sm ghost" id="addBtn" hidden>예약 불러오기</button></h2>
+      <div id="trips"><div class="empty">불러오는 중…</div></div>
+    </div>
+    <div class="cta"><div class="inner"><button class="btn" id="mainBtn">내 예약 불러오기</button></div></div>
+  </section>
 
-  <div class="section">
-    <h2>내 예약 <small>비용 NFT</small></h2>
-    <div id="bookings"><div class="empty">불러오는 중…</div></div>
-  </div>
-  <div class="section">
-    <h2>내 보험 <small id="count"></small></h2>
-    <div id="policies"><div class="empty">불러오는 중…</div></div>
-  </div>
-
-  <div class="cta"><div class="inner"><button class="btn ghost" id="bookBtn">예약하기 (Mock)</button><button class="btn" id="withdrawBtn" disabled>출금하기</button></div></div>
+  <section data-view="join" hidden>
+    <div class="hero">
+      <div class="label"><span id="joinBooking"></span> · 일정이 틀어지면 받는 금액</div>
+      <div class="big" id="joinCoverage"></div>
+      <div class="kv"><span class="k">지금 내는 보험료</span><span class="v" id="joinPremium" style="font-size: 20px;"></span></div>
+      <div class="sub" id="joinCondition"></div>
+    </div>
+    <div class="order">
+      <div class="order-row">
+        <span class="k">최소 보장금액<small>투자자가 더 높게 부를 수 있어요</small></span>
+        <span class="stepper"><button type="button" data-step="minCoverage:-1000" aria-label="1,000원 내리기">−</button><input id="minCoverage" inputmode="numeric" aria-label="최소 보장금액"><span class="unit">원</span><button type="button" data-step="minCoverage:1000" aria-label="1,000원 올리기">+</button></span>
+      </div>
+      <div class="order-row">
+        <span class="k">보험료<small>일정이 무사하면 투자자의 수익이 돼요</small></span>
+        <span class="stepper"><button type="button" data-step="premium:-100" aria-label="100원 내리기">−</button><input id="premium" inputmode="numeric" aria-label="보험료"><span class="unit">원</span><button type="button" data-step="premium:100" aria-label="100원 올리기">+</button></span>
+      </div>
+      <div class="order-row">
+        <span class="k">투자자 모집 시간<small id="minutesHint"></small></span>
+        <span class="stepper"><button type="button" data-step="minutes:-1" aria-label="1분 줄이기">−</button><input id="minutes" inputmode="numeric" aria-label="모집 시간"><span class="unit">분</span><button type="button" data-step="minutes:1" aria-label="1분 늘리기">+</button></span>
+      </div>
+    </div>
+    <div class="cta"><div class="inner"><button class="btn" id="doJoin">가입하기</button></div></div>
+  </section>
 </main>
 
-<div class="sheet-bg" id="sheetBg"></div>
-<div class="sheet" id="bookSheet">
-  <h3>예약하기</h3>
-  <div class="meta" style="margin-bottom: 10px;">Mock 발급사가 예약을 비용 NFT로 발급해요.</div>
-  <div class="choice" id="caseChoice"></div>
-  <div class="row" style="margin-top: 14px;"><button class="btn ghost" data-close>닫기</button><button class="btn" id="doBook">예약하기</button></div>
-</div>
-<div class="sheet" id="joinSheet">
-  <h3 id="joinTitle">보험 가입</h3>
-  <div class="meta" id="joinCondition"></div>
-  <div class="field"><label>보험료 (ETH)</label><input id="premium" inputmode="decimal"><div class="hint">일정이 무사하면 투자자의 수익이 돼요.</div></div>
-  <div class="field"><label>최소 보장금액 (ETH)</label><input id="minCoverage" inputmode="decimal"><div class="hint">경매 시작가예요. 투자자가 이보다 높게 부를 수 있어요.</div></div>
-  <div class="field"><label>투자자 모집 시간 (분)</label><input id="minutes" inputmode="numeric"><div class="hint" id="minutesHint"></div></div>
-  <div class="row" style="margin-top: 14px;"><button class="btn ghost" data-close>닫기</button><button class="btn" id="doJoin">가입하기</button></div>
-</div>
 <div class="toast" id="toast"></div>
 
 <script>
 (async () => {
   const ctx = await setup({ defaultRole: 4 });
-  let chosenCase = ctx.cases[0].key;
   let joining = null;
+  let loaded = false;
 
-  const open = (id) => { $("sheetBg").className = "sheet-bg on"; $(id).className = "sheet on"; };
-  const close = () => { $("sheetBg").className = "sheet-bg"; document.querySelectorAll(".sheet").forEach((s) => (s.className = "sheet")); };
-  $("sheetBg").onclick = close;
-  document.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
+  const show = createViews({ home: "내 여행 보험", join: "보험 가입" });
+  const back = () => history.back();
 
-  $("caseChoice").innerHTML = ctx.cases.map((c) => `<div class="card tap" data-case="${c.key}"><div class="row"><span class="title">${esc(c.booking)}</span><span class="meta">${eth(ethers.parseEther(c.amountEth))}</span></div><div class="meta">${esc(c.title)}</div></div>`).join("");
-  const markCase = () => document.querySelectorAll("[data-case]").forEach((el) => el.classList.toggle("on", el.dataset.case === chosenCase));
-  document.querySelectorAll("[data-case]").forEach((el) => (el.onclick = () => { chosenCase = el.dataset.case; markCase(); }));
-  markCase();
-
-  $("bookBtn").onclick = () => open("bookSheet");
-  $("doBook").onclick = async () => {
-    try {
-      $("doBook").disabled = true;
-      const booked = await api(PLATFORM, "/bookings", { to: ctx.address, case: chosenCase });
-      toast(`예약 NFT #${booked.tokenId}를 받았어요`);
-      close();
-      ctx.refresh();
-    } catch (e) {
-      toast(e.message, true);
-    } finally {
-      $("doBook").disabled = false;
-    }
-  };
-
-  async function myBookings(now) {
+  async function myBookings() {
     const total = Number(await ctx.nft.totalMinted());
     const ids = Array.from({ length: total }, (_, i) => i + 1);
     const owners = await Promise.all(ids.map((id) => ctx.nft.ownerOf(id)));
@@ -99,26 +81,48 @@
   function joinSheet(entry, now) {
     const item = ctx.caseOf(entry.booking.subject);
     joining = entry;
-    $("joinTitle").textContent = item ? item.title : "보험 가입";
-    $("joinCondition").textContent = `${conditionText(item)} · 예약 ${when(entry.booking.start)}`;
-    $("premium").value = item?.premiumEth || "0.003";
-    $("minCoverage").value = item?.minCoverageEth || "0.06";
-    const maxMinutes = Math.floor((Number(entry.booking.start) - now - ctx.config.minGap) / 60);
-    $("minutes").value = Math.max(1, Math.min(5, maxMinutes));
-    $("minutesHint").textContent = maxMinutes >= 1 ? `예약 시작 전에 끝나야 해서 최대 ${maxMinutes}분까지 정할 수 있어요.` : "예약 시작이 너무 가까워 가입할 수 없어요.";
-    open("joinSheet");
+    $("joinBooking").textContent = item?.title || "보험";
+    $("joinCondition").textContent = conditionText(item).replace("이면 지급", "이면 받아요");
+    $("premium").value = won(weiToKrw(ethers.parseEther(item?.premiumEth || "0.003")));
+    $("minCoverage").value = won(weiToKrw(ethers.parseEther(item?.minCoverageEth || "0.06")));
+    showPremiumEth();
+    const maxMinutes = Math.floor((Number(entry.booking.start) - now - ctx.config.minGap - 30) / 60);
+    $("minutes").value = Math.max(1, Math.min(10, maxMinutes));
+    $("minutesHint").textContent = `출발 전 최대 ${maxMinutes}분`;
+    joining.maxMinutes = maxMinutes;
+    show("join");
   }
+
+  const digits = (v) => Number(String(v).replace(/[^0-9]/g, "")) || 0;
+  const wonWithEth = (value) => {
+    let wei = 0n;
+    try { wei = krwToWei(value); } catch {}
+    return money(wei);
+  };
+  function showPremiumEth() {
+    $("joinCoverage").innerHTML = wonWithEth($("minCoverage").value).replace("원</span>", "원 이상</span>");
+    $("joinPremium").innerHTML = wonWithEth($("premium").value);
+  }
+  $("premium").oninput = showPremiumEth;
+  $("minCoverage").oninput = showPremiumEth;
+  document.querySelectorAll("[data-step]").forEach((el) => (el.onclick = () => {
+    const [field, delta] = el.dataset.step.split(":");
+    let next = Math.max(field === "minutes" ? 1 : 0, digits($(field).value) + Number(delta));
+    if (field === "minutes") next = Math.min(joining?.maxMinutes || next, next);
+    $(field).value = field === "minutes" ? String(next) : won(next);
+    showPremiumEth();
+  }));
 
   $("doJoin").onclick = async () => {
     const item = ctx.caseOf(joining.booking.subject);
-    const biddingEnd = (await ctx.now()) + Number($("minutes").value) * 60;
+    const biddingEnd = (await ctx.now()) + digits($("minutes").value) * 60;
     const condition = { oracle: ctx.config.oracle, kind: item.kindId, comparison: 0, threshold: item.threshold };
     $("doJoin").disabled = true;
     const ok = await ctx.send("보험 가입", () =>
-      ctx.write.requestPolicy(joining.tokenId, condition, ethers.parseEther($("minCoverage").value), biddingEnd, { value: ethers.parseEther($("premium").value) })
+      ctx.write.requestPolicy(joining.tokenId, condition, krwToWei($("minCoverage").value), biddingEnd, { value: krwToWei($("premium").value) })
     );
     $("doJoin").disabled = false;
-    if (ok) { close(); ctx.refresh(); }
+    if (ok) { back(); ctx.refresh(); }
   };
 
   function outcome(p) {
@@ -130,17 +134,7 @@
     };
   }
 
-  function policyLine(p, now) {
-    const { policy, status } = p;
-    if (status === 1) return `모집 중 · 입찰 ${p.bids.length}건 · 마감 ${left(policy.biddingEnd, now)}`;
-    if (status === 2) return `지분 ${outcome(p).sold}/100 체결 · 판정 ${when(policy.windowEnd)}부터`;
-    if (status === 3) return "투자자가 없어 보험료를 돌려받아요";
-    if (status === 4) return "일정이 틀어져 보장금을 받았어요";
-    if (status === 5) return "일정이 무사히 끝났어요";
-    return "판정이 없어 보험료를 돌려받아요";
-  }
-
-  function settleButton(p) {
+  function refundButton(p) {
     const refund = p.status === 3 || p.status === 6 || (p.status === 2 && outcome(p).sold < 100);
     if (!refund) return "";
     if (p.stored === 1) return `<button class="btn sm" data-bind="${p.id}">보험료 돌려받기</button>`;
@@ -148,41 +142,68 @@
     return "";
   }
 
+  function tripCard(entry, policy, now) {
+    const item = ctx.caseOf(entry.booking.subject);
+    const name = esc(item?.booking || `예약 #${entry.tokenId}`);
+    if (!policy) {
+      const open = Number(entry.booking.start) - now > ctx.config.minGap + 60;
+      const action = open ? `<button class="btn sm" data-join="${entry.tokenId}">보험 들기</button>` : `<span class="chip gray">가입 마감</span>`;
+      return `<div class="card"><div class="row"><span><span class="title">${name}</span><div class="meta">출발 ${when(entry.booking.start)}</div></span>${action}</div></div>`;
+    }
+    const lines = {
+      1: `보장금액 최소 ${krw(policy.policy.minCoverage)} · 투자자 모집 ${left(policy.policy.biddingEnd, now)}`,
+      2: `보장금액 ${krw(outcome(policy).coverage)} · 여행이 끝나면 판정해요`,
+      3: "투자자가 없어 보험료를 돌려받아요",
+      4: `일정이 틀어져 보장금 ${krw(policy.policy.coverage)}을 받았어요`,
+      5: "일정이 무사히 끝났어요",
+      6: "판정이 없어 보험료를 돌려받아요",
+    };
+    return `<div class="card"><div class="row"><span class="title">${name}</span>${statusChip(policy.status)}</div>
+      <div class="row"><span class="meta">${lines[policy.status]}</span>${refundButton(policy)}</div></div>`;
+  }
+
   ctx.refresh = async () => {
     const now = await ctx.now();
-    const [credits, bookings, all] = await Promise.all([ctx.read.credits(ctx.address), myBookings(now), ctx.policies()]);
-    $("credits").innerHTML = money(credits);
-    $("withdrawBtn").disabled = credits === 0n;
-    $("heroSub").innerHTML = `지갑 <b>${ctx.address.slice(0, 8)}…</b>`;
+    const [credits, bookings, all] = await Promise.all([ctx.read.credits(ctx.address), myBookings(), ctx.policies()]);
     await ctx.gasBanner();
+    $("hero").hidden = credits === 0n;
+    $("credits").innerHTML = money(credits);
+    $("mainBtn").textContent = credits > 0n ? "출금하기" : "내 예약 불러오기";
+    $("mainBtn").dataset.mode = credits > 0n ? "withdraw" : "book";
+    $("addBtn").hidden = credits === 0n;
 
-    const insuredTokens = new Set(all.filter((p) => p.policy.insured === ctx.address).map((p) => Number(p.policy.tokenId)));
-    $("bookings").innerHTML = bookings.length
-      ? bookings.map((b) => {
-          const item = ctx.caseOf(b.booking.subject);
-          const action = Number(b.booking.start) - now > ctx.config.minGap + 60
-            ? `<button class="btn sm" data-join="${b.tokenId}">${insuredTokens.has(b.tokenId) ? "또 가입" : "보험 들기"}</button>`
-            : `<span class="chip gray">가입 마감</span>`;
-          return `<div class="card"><div class="row"><span><span class="title">${esc(item?.booking || `예약 #${b.tokenId}`)}</span><div class="meta">NFT #${b.tokenId} · ${when(b.booking.start)} · ${eth(b.booking.amount)}</div></span>${action}</div></div>`;
-        }).join("")
-      : `<div class="empty">예약이 없어요. 아래에서 예약해 보세요.</div>`;
+    const byToken = new Map(all.filter((p) => p.policy.insured === ctx.address).map((p) => [Number(p.policy.tokenId), p]));
+    $("trips").innerHTML = loaded && bookings.length
+      ? bookings.slice().reverse().map((b) => tripCard(b, byToken.get(b.tokenId), now)).join("")
+      : `<div class="empty">예약 앱에서 내 예약을 불러와 보험을 들어요.</div>`;
     document.querySelectorAll("[data-join]").forEach((el) => (el.onclick = () => joinSheet(bookings.find((b) => b.tokenId === Number(el.dataset.join)), now)));
-
-    const mine = all.filter((p) => p.policy.insured === ctx.address).reverse();
-    $("count").textContent = mine.length ? `${mine.length}건` : "";
-    $("policies").innerHTML = mine.length
-      ? mine.map((p) => {
-          const coverage = p.status === 2 || p.status === 4 ? outcome(p).coverage : p.status === 3 || p.status === 6 ? p.policy.premium : p.policy.minCoverage;
-          return `<div class="card"><div class="row"><span class="title">${esc(p.item?.title || `보험 #${p.id}`)}</span>${statusChip(p.status)}</div>
-            <div class="row"><span class="meta">${conditionText(p.item)}</span><span class="amount">${money(coverage)}</span></div>
-            <div class="row"><span class="meta">${policyLine(p, now)}</span>${settleButton(p)}</div></div>`;
-        }).join("")
-      : `<div class="empty">아직 가입한 보험이 없어요.</div>`;
-    document.querySelectorAll("[data-bind]").forEach((el) => (el.onclick = async () => (await ctx.send("결과 확정", () => ctx.write.bind(el.dataset.bind))) && ctx.refresh()));
-    document.querySelectorAll("[data-void]").forEach((el) => (el.onclick = async () => (await ctx.send("결과 확정", () => ctx.write.voidPolicy(el.dataset.void))) && ctx.refresh()));
+    document.querySelectorAll("[data-bind]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.bind(el.dataset.bind))) && ctx.refresh()));
+    document.querySelectorAll("[data-void]").forEach((el) => (el.onclick = async () => (await ctx.send("보험료 돌려받기", () => ctx.write.voidPolicy(el.dataset.void))) && ctx.refresh()));
   };
 
-  $("withdrawBtn").onclick = async () => (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
+  async function importBookings() {
+    try {
+      $("mainBtn").disabled = true;
+      toast("예약 앱에서 불러오는 중…");
+      await api(PLATFORM, "/bookings/import", { to: ctx.address });
+      loaded = true;
+      toast("내 예약을 불러왔어요");
+      ctx.refresh();
+    } catch (e) {
+      toast(e.message, true);
+    } finally {
+      $("mainBtn").disabled = false;
+    }
+  }
+  $("addBtn").onclick = importBookings;
+  $("walletMode").addEventListener("change", () => {
+    loaded = false;
+    ctx.refresh();
+  });
+  $("mainBtn").onclick = async () => {
+    if ($("mainBtn").dataset.mode !== "withdraw") return importBookings();
+    (await ctx.send("출금", () => ctx.write.withdraw())) && ctx.refresh();
+  };
   await ctx.refresh();
   setInterval(() => !document.hidden && ctx.refresh().catch(() => {}), 4000);
 })().catch((e) => toast(e.message || String(e), true));

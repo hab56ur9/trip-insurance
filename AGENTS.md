@@ -26,10 +26,10 @@ README.md            실행 · 테스트 · 화면 · API
 ```text
 src/TripInsurance.sol    가입 · 입찰 · 배정 · 판정 · 무효 · 청구 · 출금, 시간에 따른 상태 전환은 지연 실행
 src/BookingNFT.sol       비용 NFT (예약 대상 · 시작 · 끝 · 금액), 발급사만 민팅
-services/platform.js     Mock 발급사(POST /bookings) · 수도꼭지(POST /faucet) · GET /cases · GET /config, 포트 8787
+services/platform.js     Mock 발급사(POST /bookings · /bookings/import) · 수도꼭지(POST /faucet) · GET /cases · GET /config, 포트 8787
 services/oracle.js       Mock 오라클(POST /report) · 로컬 시간 이동(POST /time), 포트 8788 (이 호스트만)
 services/cases.js        예약 상품 3종 (KTX 지연 · 숙소 폭우 · 서핑 강풍)과 기본 조건
-ui/buyer.html            구매자: 예약(Mock) · 보험 가입 · 내 보험 · 보험료 돌려받기 · 출금
+ui/buyer.html            구매자: 내 예약 불러오기 · 보험 가입 · 내 여행 · 보험료 돌려받기 · 출금
 ui/investor.html         투자자: 입찰 · 내 투자 · 청구 · 출금
 ui/oracle.html           발표자: 정상 · 지연 판정, 모집 마감 · 판정 시작 · 판정 종료로 시간 이동
 ui/deck.html             발표 덱 (이전 설계 기준, 다시 만들어야 함)

@@ -52,6 +52,17 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const eth = (wei) => `${Number(ethers.formatEther(wei)).toLocaleString("ko-KR", { maximumFractionDigits: 6 })} ETH`;
 const krw = (wei) => `${Math.round(Number(ethers.formatEther(wei)) * ETH_KRW).toLocaleString("ko-KR")}원`;
+const krwToWei = (won) => ethers.parseEther((Number(String(won).replace(/[^0-9]/g, "")) / ETH_KRW).toFixed(12));
+const weiToKrw = (wei) => Math.round(Number(ethers.formatEther(wei)) * ETH_KRW / 100) * 100;
+const weiToKrwCeil = (wei) => Math.ceil(Number(ethers.formatEther(wei)) * ETH_KRW / 10) * 10;
+const won = (n) => Number(n).toLocaleString("ko-KR");
+const ethHint = (value) => {
+  try {
+    return `≈ ${eth(krwToWei(value))}`;
+  } catch {
+    return "";
+  }
+};
 const money = (wei) => `<span class="money"><span>${krw(wei)}</span><small>${eth(wei)}</small></span>`;
 const when = (ts) => new Date(Number(ts) * 1000).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 const left = (ts, now) => {
@@ -186,4 +197,19 @@ function allocation(bids) {
 
 function conditionText(item) {
   return item ? `${item.label} ${item.threshold}${item.unit} 이상이면 지급` : "알 수 없는 조건";
+}
+
+function createViews(titles) {
+  const show = (name, push = true) => {
+    document.querySelectorAll("[data-view]").forEach((el) => (el.hidden = el.dataset.view !== name));
+    $("back").hidden = name === "home";
+    $("nav").hidden = name !== "home";
+    $("heading").textContent = titles[name];
+    if (push) history.pushState({ view: name }, "", `#${name}`);
+    window.scrollTo(0, 0);
+  };
+  $("back").onclick = () => history.back();
+  window.onpopstate = (e) => show(e.state?.view || "home", false);
+  history.replaceState({ view: "home" }, "", location.pathname + location.search);
+  return show;
 }

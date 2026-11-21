@@ -106,7 +106,7 @@ async function main() {
     const policy = await read.policyOf(policyId);
     const refund = (await read.credits(buyer.address)) - before;
     check(Number(policy.soldUnits) === 40, `sold ${policy.soldUnits}`);
-    check(refund === (parseEther("0.003") * 60n) / 100n, `refund ${refund}`);
+    check(refund === (parseEther(caseOf("ktx").premiumEth) * 60n) / 100n, `refund ${refund}`);
     return `체결 40개, 환불 ${eth(refund)}`;
   });
 
@@ -116,8 +116,8 @@ async function main() {
     check((await status(policyId)) === "Cancelled", "cancelled view");
     const before = await read.credits(buyer.address);
     await (await as(buyer).bind(policyId)).wait();
-    check((await read.credits(buyer.address)) - before === parseEther("0.006"), "premium refund");
-    return "보험료 0.006 ETH 환불";
+    check((await read.credits(buyer.address)) - before === parseEther(caseOf("hotel").premiumEth), "premium refund");
+    return `보험료 ${caseOf("hotel").premiumEth} ETH 환불`;
   });
 
   await scenario("무효: 판정 없이 기간 종료 → 첫 청구가 무효 처리", async () => {

@@ -5,6 +5,7 @@
   --blue: #3182f6; --blue-soft: #e8f3ff; --red: #f04452; --red-soft: #ffeeee; --green: #03b26c; --green-soft: #e5f8f0; --amber: #f59f00; --amber-soft: #fff4e0;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
 main { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; min-height: 100vh; background: var(--card); }
 @media (min-width: 520px) { main { box-shadow: 0 0 0 1px var(--line); } }
@@ -39,7 +40,7 @@ button, input, select { font: inherit; }
 .money small { color: var(--text-3); font-weight: 500; font-size: 12px; letter-spacing: 0; }
 .hero .big .money { align-items: flex-start; }
 .hero .big .money small { font-size: 14px; margin-top: 2px; }
-.amount.up { color: var(--red); } .amount.down { color: var(--blue); }
+.amount.up, .big.up { color: var(--red); } .amount.down { color: var(--blue); }
 .chip { display: inline-flex; align-items: center; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 8px; }
 .chip.info { color: var(--blue); background: var(--blue-soft); }
 .chip.good { color: var(--green); background: var(--green-soft); }
@@ -107,3 +108,30 @@ button, input, select { font: inherit; }
 .choice .card .row .meta { white-space: nowrap; }
 .right { text-align: right; }
 .gap { height: 10px; }
+.order { border-top: 1px solid var(--line); margin-top: 14px; }
+.order-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.order-row .k { color: var(--text-2); font-size: 14px; }
+.order-row .k small { display: block; color: var(--text-3); font-size: 12px; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper button { width: 36px; height: 36px; border: 0; border-radius: 10px; background: var(--soft); color: var(--text); font-size: 18px; cursor: pointer; }
+.stepper input { width: 120px; border: 0; background: transparent; text-align: right; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.stepper input:focus { outline: none; }
+.stepper .unit { color: var(--text-2); font-size: 15px; }
+.quick { display: flex; gap: 6px; justify-content: flex-end; padding: 8px 0 2px; }
+.quick button { border: 1px solid var(--line); background: var(--card); color: var(--text-2); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+.cta .inner.stack { flex-direction: column; gap: 10px; }
+.total { display: flex; justify-content: space-between; align-items: flex-end; }
+.total .k { color: var(--text-2); font-size: 14px; }
+.total .k small { display: block; color: var(--text-3); font-size: 12px; }
+.total .v { text-align: right; font-size: 26px; font-weight: 800; letter-spacing: -0.4px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.total .v small { display: block; color: var(--text-3); font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.risk { display: inline-flex; flex-direction: column; align-items: flex-end; padding: 8px 12px; border-radius: 14px; line-height: 1.15; }
+.risk .k { font-size: 12px; font-weight: 600; }
+.risk .v { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.risk small { font-size: 11px; opacity: .8; }
+.risk.low { color: var(--green); background: var(--green-soft); }
+.risk.mid { color: var(--amber); background: var(--amber-soft); }
+.risk.high { color: var(--red); background: var(--red-soft); }
+.chip.risk-low { color: var(--green); background: var(--green-soft); }
+.chip.risk-mid { color: var(--amber); background: var(--amber-soft); }
+.chip.risk-high { color: var(--red); background: var(--red-soft); }

@@ -3,7 +3,7 @@ const { CASES, caseOf } = require("./cases");
 const { createJsonServer, RequestError } = require("./http");
 
 const FAUCET_ETH = process.env.FAUCET_ETH || "0.05";
-const START_AFTER = Number(process.env.BOOKING_START_AFTER || 15 * 60);
+const START_AFTER = Number(process.env.BOOKING_START_AFTER || 30 * 60);
 const DURATION = Number(process.env.BOOKING_DURATION || 60 * 60);
 
 const subjectOf = (item) => id(`${item.key}:${item.subject}`);
@@ -30,6 +30,23 @@ function createPlatform({ chain, log = () => {} }) {
     return { tokenId: tokenId.toString(), case: item.key, start, end };
   }
 
+  async function importBookings({ to }) {
+    if (typeof to !== "string" || !isAddress(to)) throw new RequestError("지갑 주소가 아니에요");
+    const owner = getAddress(to);
+    const read = chain.nft();
+    const total = Number(await read.totalMinted());
+    const owned = new Set();
+    for (let tokenId = 1; tokenId <= total; tokenId++) {
+      if ((await read.ownerOf(tokenId)) === owner) owned.add((await read.bookingOf(tokenId)).subject);
+    }
+    const added = [];
+    for (const item of CASES) {
+      if (owned.has(subjectOf(item))) continue;
+      added.push(await book({ to: owner, case: item.key }));
+    }
+    return { added: added.length, bookings: added };
+  }
+
   async function faucet({ to }) {
     if (typeof to !== "string" || !isAddress(to)) throw new RequestError("지갑 주소가 아니에요");
     const address = getAddress(to);
@@ -54,10 +71,11 @@ function createPlatform({ chain, log = () => {} }) {
     "GET /cases": cases,
     "GET /config": () => ({ ...chain.addresses, chainId: chain.chainId, local: chain.local, rpc: chain.publicRpc, oracle: chain.wallets.oracle.address }),
     "POST /bookings": book,
+    "POST /bookings/import": importBookings,
     "POST /faucet": faucet,
   };
 
-  return { book, faucet, cases, serve: (port, host = "127.0.0.1") => createJsonServer(routes, log).listen(port, host) };
+  return { book, importBookings, faucet, cases, serve: (port, host = "127.0.0.1") => createJsonServer(routes, log).listen(port, host) };
 }
 
 module.exports = { createPlatform, subjectOf };

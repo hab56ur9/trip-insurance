@@ -33,7 +33,7 @@ python3 -m http.server 8099 --bind 127.0.0.1   # 레포 루트에서
 ```
 
 ```text
-구매자   http://127.0.0.1:8099/ui/buyer.html      예약(Mock) · 보험 가입 · 보험료 돌려받기 · 출금
+구매자   http://127.0.0.1:8099/ui/buyer.html      내 예약 불러오기 · 보험 가입 · 보험료 돌려받기 · 출금
 투자자   http://127.0.0.1:8099/ui/investor.html   입찰 · 청구 · 출금
 발표자   http://127.0.0.1:8099/ui/oracle.html     정상 · 지연 판정, 시간 이동
 ```
@@ -46,6 +46,7 @@ python3 -m http.server 8099 --bind 127.0.0.1   # 레포 루트에서
 GET  :8787/cases        예약 상품 3종과 기본 조건
 GET  :8787/config       컨트랙트 주소 · 오라클 주소
 POST :8787/bookings     { to, case } → 비용 NFT 발급
+POST :8787/bookings/import  { to } → 아직 없는 예약 상품을 모두 비용 NFT로 발급 (내 예약 불러오기)
 POST :8787/faucet       { to } → 테스트 ETH, 지갑당 1회
 POST :8788/report       { policyId, outcome: "normal" | "delay" } → 판정 기간이 열리면 서명해 제출
 POST :8788/time         { to } → 로컬 체인 시각 이동
